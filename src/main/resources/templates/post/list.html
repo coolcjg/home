@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/html" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>게시글 리스트</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="/css/style.css" type="text/css" rel="stylesheet">
+</head>
+<body>
+
+    <th:block th:replace="~{common/nav}"></th:block>
+
+    <div class="mx-5">
+        <table class="table table-hover text-center">
+            <thead>
+            <tr>
+                <th scope="col" style="width:40%">제목</th>
+                <th scope="col" style="width:20%">작성자</th>
+                <th scope="col" style="width:20%">작성일</th>
+                <th scope="col" style="width:10%">조회</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="obj : ${data.list}">
+                <th class="mouse-over" scope="row" th:text="${obj.title}" th:onclick="|postView(${obj.postId})|"></th>
+                <td th:text="${obj.userId}"></td>
+                <td th:text="${obj.regDate}"></td>
+                <td th:text="${obj.viewCnt}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-center">
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+
+                <th:block th:if="${data.prevPage != ''}">
+                    <li class="page-item">
+                        <a class="page-link" th:href="${data.prevPage}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                </th:block>
+
+                <!--
+                queryParam을 인코딩 하지 않고 그냥 사용하려면 '|'를 양 끝에 추가한다.
+                -->
+                <th:block th:each="obj : ${data.pageList}">
+                    <li class="page-item" th:classappend="${obj.pageNumber == data.pageNumber} ? 'active' : ''"><a class="page-link" th:href="${obj.pageUrl}" th:text="${obj.pageNumber}"></a></li>
+                </th:block>
+
+                <th:block th:if="${data.nextPage != ''}">
+                    <li class="page-item">
+                        <a class="page-link" th:href="${data.nextPage}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </th:block>
+            </ul>
+        </nav>
+
+    </div>
+
+    <div class="mx-5 post-search-div">
+        <div class="input-group mb-3 post-search-inner-div">
+            <select class="form-select" aria-label="Default select example" id="searchType">
+                <option value="title" th:selected="${data.searchType} == 'title'">제목</option>
+                <option value="content" th:selected="${data.searchType} == 'content'">내용</option>
+                <option value="userId" th:selected="${data.searchType} == 'userId'">아이디</option>
+            </select>
+            <input type="text" class="form-control" aria-label="Text input with dropdown button" id="searchText" th:value="${data.searchText}">
+            <button class="btn btn-primary" type="button" th:onclick="search()">검색</button>
+        </div>
+
+
+        <div class="mx-2" sec:authorize="isAuthenticated()">
+            <button class="btn btn-success" type="button" th:onclick="location.href='/post/write'">글쓰기</button>
+        </div>
+    </div>
+
+    <th:block th:replace="~{common/bottom}"></th:block>
+    <script src="/js/common.js"></script>
+
+    <script>
+
+        function search(){
+            const searchType = $("#searchType").val();
+            const searchText = $("#searchText").val().trim();
+
+            if(searchText === ''){
+                location.href = "/post/list"
+            }else{
+                location.href = "/post/list?searchType=" + searchType + "&searchText=" + searchText;
+            }
+        }
+
+        function postView(postId){
+            location.href="/post/" + postId;
+        }
+
+    </script>
+</body>
+</html>

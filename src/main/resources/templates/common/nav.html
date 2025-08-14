@@ -1,0 +1,79 @@
+<html lang="en" xmlns:th="http://www.w3.org/1999/html" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light" sec:authorize="isAnonymous()">
+      <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarTogglerDemo01" style="display:flex !important; flex-basis:auto;">
+
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="/post/list">Home</a>
+            </li>
+          </ul>
+
+          <div class="d-flex align-items-center">
+            <div class="me-3">
+              <button class="btn btn-primary" type="button" th:onclick="|location.href='@{/user/login}'|">로그인</button>
+              <button class="btn btn-success" type="button" th:onclick="|location.href='@{/user/signup}'|">회원가입</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </nav>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light" sec:authorize="isAuthenticated()">
+      <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarTogglerDemo02">
+
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="/post/list">Home</a>
+            </li>
+          </ul>
+
+          <div class="d-flex align-items-center">
+            <div class="me-3">
+              <img th:src="${#authentication.principal.image}" class="img-thumbnail post-nav-image" alt="">
+            </div>
+
+            <div class="me-3">
+              <span class="navbar-text" th:text="|${#authentication.principal.name}(${#authentication.name})|"></span>
+            </div>
+
+            <div class="me-3">
+              <button class="btn btn-success" type="button" th:onclick="|location.href='@{/user/view}'|">회원정보</button>
+            </div>
+
+            <div class="me-3">
+              <button class="btn btn-danger" type="button" th:onclick="|logout()|">로그아웃</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </nav>
+
+    <th:block th:replace="~{common/bottom}"></th:block>
+
+    <script>
+      function logout(){
+        if(confirm('로그아웃하시겠습니까?')){
+          $.ajax({
+            url: "/v1/user/logout",
+            type: "GET",
+            success: function (data, status, xhr) {
+              if(data.code === "200"){
+                location.href='/post/list'
+              }else{
+                alert('로그아웃이 실패하였습니다.');
+              }
+            },
+            error: function (data, status, xhr) {
+              alert(data.responseJSON.message);
+            },
+          });
+        }
+      }
+
+    </script>
+
+</html>

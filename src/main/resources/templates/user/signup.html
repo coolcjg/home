@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>회원 가입</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="/css/style.css" type="text/css" rel="stylesheet">
+</head>
+<body>
+
+    <th:block th:replace="~{common/nav}"></th:block>
+
+    <div class="signupDiv">
+        <form class="w-500">
+
+            <br>
+            <br>
+            <br>
+
+            <div class="col-auto">
+                <label for="userId" class="col-form-label">아이디</label>
+            </div>
+
+            <div class="row g-3 align-items-center">
+                <div class="col-9">
+                    <input type="text" id="userId" class="form-control" th:onkeyup='|changeUserId(this, 20)|'>
+                </div>
+                <div class="col-3">
+                    <button type="button" class="btn btn-success" th:onclick='|checkUserId()|'>중복 확인</button>
+                </div>
+            </div>
+
+            <br>
+
+            <label for="password1" class="form-label">비밀번호</label>
+            <input type="password" id="password1" class="form-control" aria-describedby="passwordHelpBlock1" th:onkeyup='|checkPassword1()|'>
+            <div id="passwordHelpBlock1" class="form-text">
+                영문자, 숫자 특수문자(`~!@#$%^&*()-_=+) 조합 8~20자리
+            </div>
+
+            <br>
+
+            <label for="password2" class="form-label">비밀번호 확인</label>
+            <input type="password" id="password2" class="form-control" aria-describedby="passwordHelpBlock2" th:onkeyup='|checkPassword2()|'>
+            <div id="passwordHelpBlock2" class="form-text">
+                위에서 입력한 비밀번호와 같은 값을 입력해주세요.
+            </div>
+
+            <br>
+
+            <label for="name" class="form-label">이름</label>
+            <input type="text" id="name" class="form-control" th:onkeyup='|checkLength(this, 20)|'>
+
+            <br>
+
+            <div class="mb-3">
+                <label for="image" class="form-label">프로필 이미지(jpg, png, 3MB제한)</label>
+                <input class="form-control" type="file" id="image" accept=".jpg, .png" th:onChange='|checkImage()|'>
+            </div>
+
+        </form>
+        <button id="submitButton" class="btn btn-success" th:onclick="|userInsert()|">회원가입</button>
+    </div>
+
+    <th:block th:replace="~{common/bottom}"></th:block>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/sha256.js"></script>
+    <script src="/js/common.js"></script>
+    <script src="/js/user/user.js"></script>
+
+    <script>
+        let checkUserIdYN = 'N';
+
+        function changeUserId(el, maxLength){
+            checkUserIdYN = 'N';
+            checkLength(el, maxLength);
+        }
+
+        function checkUserId(){
+            checkUserIdYN = 'N';
+
+            const userId = $("#userId").val();
+            const regex  = /^[a-z]+[a-z0-9]{3,19}$/g;
+            const result = regex.test(userId);
+
+            if(result === false){
+                alert('아이디는 영문 소문자로 시작, 영문소문자 + 숫자 조합 4~20자리만 가능합니다.');
+                return;
+            }
+
+            $.ajax({
+                url: "/v1/user/" + userId + "/count",
+                type: "GET",
+                success: function (data, status, xhr) {
+                    if(data.data === 0){
+                        alert('사용 가능한 아이디입니다.');
+                        checkUserIdYN = 'Y';
+                    }else{
+                        alert('사용 불가능한 아이디입니다.');
+                    }
+                },
+                error: function (data, status, xhr) {
+                    alert(data.responseJSON.message);
+                },
+            });
+        }
+
+        function userInsert(){
+
+            if(checkUserIdYN === 'N') {
+                alert('아이디 중복확인을 해주세요');
+                return;
+            }
+
+            if(!checkBlank("name")){
+                alert('이름을 입력해주세요');
+                return;
+            }
+
+            if(checkPasswordYN === 'N'){
+                alert('적합한 비밀번호를 입력해주세요');
+                return;
+            }
+
+            if(checkPasswordConfirmYN === 'N'){
+                alert('비밀번호 확인을 해주세요');
+                return;
+            }
+
+            if(!validImage()){
+                alert('프로필 이미지를 추가해주세요');
+                return;
+            }
+
+            disableButton();
+
+            const formData = new FormData();
+
+            formData.append("userId", $("#userId").val());
+            formData.append("name", $("#name").val());
+            formData.append("password", CryptoJS.SHA256($("#password1").val()).toString(CryptoJS.enc.Hex));
+            formData.append("image", $("#image")[0].files[0]);
+
+            $.ajax({
+                url: "/v1/user",
+                type: "POST",
+                enctype : 'multipart/form-data',
+                data : formData,
+                processData : false,
+                contentType: false,
+                cache : false,
+                success: function (data, status, xhr) {
+                    if(data.code === "201"){
+                        alert('회원 가입이 완료되었습니다.');
+                        location.href='/user/login';
+                    }else{
+                        alert('회원 가입이 실패하였습니다.');
+                        $("#submitButton").removeClass("disabled");
+                    }
+                },
+                error: function (data, status, xhr) {
+                    alert(data.responseJSON.message);
+                },
+            });
+
+            enableButton();
+
+        }
+    </script>
+
+
+
+</body>
+</html>
