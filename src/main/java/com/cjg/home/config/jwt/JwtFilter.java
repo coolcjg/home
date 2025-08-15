@@ -1,6 +1,9 @@
 package com.cjg.home.config.jwt;
 
 
+import com.cjg.home.domain.User;
+import com.cjg.home.repository.UserRepository;
+import com.cjg.home.service.RedisService;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,6 +27,10 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
 
 	private final JwtTokenProvider jwtTokenProvider;
+
+    private  final UserRepository userRepository;
+
+    private final RedisService redisService;
 
 	@Value("${cookie.domain}")
 	private String cookieDomain;
@@ -54,6 +61,18 @@ public class JwtFilter extends OncePerRequestFilter {
 
 						response.addCookie(cookie);
 					}
+
+                    //해당 사용자가 있는지 확인한다.
+                    String userId = jwtTokenProvider.getUserPrincipal(token[0]);
+                    User user = userRepository.findByUserId(userId);
+
+                    //사용자 없으면 캐시, 쿠키 삭제
+                    if(user == null){
+                        redisService.delete(userId);
+                        SecurityContextHolder.clearContext();
+                        invalidToken(request, response);
+                        return;
+                    }
 
 					//토큰이 있다는것은 로그인을 했다는것이기 때문에 추가로 인증로직을 수행하지 않는다.
 					Authentication auth = jwtTokenProvider.getAuthentication(token[0]);
