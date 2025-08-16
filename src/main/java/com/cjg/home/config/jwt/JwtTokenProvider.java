@@ -95,6 +95,22 @@ public class JwtTokenProvider {
 		return refreshToken;
 	}
 
+    public String createRefreshToken(String userId){
+        Claims claims = Jwts.claims().subject(userId).build();
+        Date now = new Date();
+        Date expireDate = new Date(now.getTime() + refreshExpirationTime*60*1000);
+
+        String refreshToken = Jwts.builder()
+                .claims(claims)
+                .issuedAt(now)
+                .expiration(expireDate)
+                .signWith(Keys.hmacShaKeyFor(secretKey.getBytes()))
+                .compact();
+
+        redisService.save(userId, refreshToken, refreshExpirationTime*60*1000, TimeUnit.MILLISECONDS);
+        return refreshToken;
+    }
+
 	/**
 	 * 토큰으로부터 클레임을 만들고, 이를 통해 User 객체 생성해 Authentication 객체 반환
 	 */

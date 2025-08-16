@@ -1,9 +1,7 @@
 package com.cjg.home.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.cjg.home.code.SocialType;
+import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.DynamicUpdate;
@@ -40,5 +38,15 @@ public class User {
 	private LocalDateTime regDate;
 
 	private LocalDateTime modDate;
+
+    @Column(nullable = true, length = 200)
+    private String email;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private SocialType socialType;
+
+    @Column
+    private String socialId;
 
 }

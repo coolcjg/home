@@ -60,7 +60,10 @@ public enum ResultCode {
     COMMENT_DELETE_SUCCESS(HttpStatus.OK, "댓글 삭제 성공"),
 
     COMMENT_SEARCH_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글 조회 실패"),
-    COMMENT_INVALID_AUTH(HttpStatus.NOT_FOUND, "댓글 권한이 없습니다");
+    COMMENT_INVALID_AUTH(HttpStatus.NOT_FOUND, "댓글 권한이 없습니다"),
+
+    OAUTH_LOGIN_INVALID_SOCIAL_TYPE(HttpStatus.BAD_REQUEST, "미등록된 OAuth2로그인 제공자"),
+    OAUTH_LOGIN_EXCEPTION(HttpStatus.BAD_REQUEST, "로그인 처리중 에러");
 
     private final HttpStatus httpStatus;
     private final String message;

@@ -30,6 +30,10 @@
         </form>
 
         <button id="submitButton" class="btn btn-success submitBtn" th:onclick="login()">로그인</button>
+
+        <br>
+
+        <button id="naverLogin" class="btn btn-success submitBtn" th:onclick="naverlogin()">네이버 로그인</button>
     </div>
 
     <th:block th:replace="~{common/bottom}"></th:block>
@@ -39,6 +43,10 @@
     <script src="/js/user/user.js"></script>
 
     <script>
+
+        function naverlogin(){
+            location.href="/oauth2/authorization/naver";
+        }
 
         $("#password")[0].addEventListener('keyup', event => enter(event));
 
