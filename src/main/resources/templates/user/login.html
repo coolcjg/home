@@ -47,7 +47,7 @@
         async function goLogin(){
             const apiURL = await getLoginUrlInfo();
             console.log("apiURL", apiURL);
-            window.open(apiURL, "popupWindow", "width=600, height=400, scrollbars=yes");
+            location.href=apiURL;
         }
 
         async function getLoginUrlInfo(){
