@@ -47,6 +47,8 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/v1/user/*/count").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/v1/user", "/v1/user/login").permitAll()
 
+                                .requestMatchers(HttpMethod.POST, "/getNaverApiUrl").permitAll()
+
                                 //에러페이지 표시하기위해 설정
                                 .requestMatchers("/error").permitAll()
                                 .anyRequest().authenticated()

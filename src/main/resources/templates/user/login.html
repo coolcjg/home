@@ -33,7 +33,7 @@
 
         <br>
 
-        <button id="naverLogin" class="btn btn-success submitBtn" th:onclick="naverlogin()">네이버 로그인</button>
+        <button id="naverLogin" class="btn btn-success submitBtn" th:onclick="goLogin()">네이버 로그인</button>
     </div>
 
     <th:block th:replace="~{common/bottom}"></th:block>
@@ -44,8 +44,15 @@
 
     <script>
 
-        function naverlogin(){
-            location.href="/oauth2/authorization/naver";
+        async function goLogin(){
+            const apiURL = await getLoginUrlInfo();
+            console.log("apiURL", apiURL);
+            window.open(apiURL, "popupWindow", "width=600, height=400, scrollbars=yes");
+        }
+
+        async function getLoginUrlInfo(){
+            const response = await fetch("/getNaverApiUrl", {method:"POST"})
+            return response.text();
         }
 
         $("#password")[0].addEventListener('keyup', event => enter(event));
