@@ -26,6 +26,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
         User user = userRepository.findByUserId(userId);
-        return new CustomUserDetails(user.getUserId(), aes256.decrypt(user.getName()), user.getAuth(), user.getPassword(), imageUrl+user.getImage());
+
+        if(!user.getImage().startsWith("http")){
+            user.setImage(imageUrl+user.getImage());
+        }
+
+        return new CustomUserDetails(user.getUserId(), aes256.decrypt(user.getName()), user.getAuth(), user.getPassword(), user.getImage());
     }
 }
