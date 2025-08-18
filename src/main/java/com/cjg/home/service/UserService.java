@@ -12,10 +12,12 @@ import com.cjg.home.dto.response.UserResponseDto;
 import com.cjg.home.exception.CustomException;
 import com.cjg.home.repository.UserRepository;
 import com.cjg.home.util.AES256;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -172,7 +175,11 @@ public class UserService {
     }
 
     public void logout(HttpServletRequest request, HttpServletResponse response){
-        redisService.delete(jwtTokenProvider.getUserPrincipal(jwtTokenProvider.resolveToken(request)[0]));
+        try{
+            redisService.delete(jwtTokenProvider.getUserPrincipal(jwtTokenProvider.resolveToken(request)[0]));
+        }catch(ExpiredJwtException e){
+            log.error("logout invalid token");
+        }
         jwtTokenProvider.removeTokenFromCookie(request, response);
         SecurityContextHolder.clearContext();
     }

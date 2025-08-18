@@ -122,7 +122,7 @@ public class JwtTokenProvider {
 		return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 	}
 
-	public String getUserPrincipal(String token){
+	public String getUserPrincipal(String token) throws ExpiredJwtException{
 		return Jwts.parser()
 				.verifyWith(Keys.hmacShaKeyFor(secretKey.getBytes()))
 				.build()
