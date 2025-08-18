@@ -1,14 +1,19 @@
 package com.cjg.home.service;
 
+import com.cjg.home.code.ResultCode;
 import com.cjg.home.code.SocialType;
 import com.cjg.home.code.UserRole;
 import com.cjg.home.config.jwt.JwtTokenProvider;
 import com.cjg.home.domain.User;
 import com.cjg.home.dto.response.UserLoginResponseDto;
+import com.cjg.home.exception.CustomException;
 import com.cjg.home.repository.UserRepository;
 import com.cjg.home.util.AES256;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +31,10 @@ import java.io.*;
 import java.math.BigInteger;
 import java.net.*;
 import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.cjg.home.domain.QUser.user;
 
 @Log4j2
 @Service
@@ -33,13 +42,22 @@ import java.security.SecureRandom;
 public class OAuth2LoginService {
 
     @Value("${naver.client-id}")
-    private String clientId;
+    private String naverClientId;
 
     @Value("${naver.client-secret}")
-    private String clientSecret;
+    private String naverClientSecret;
 
     @Value("${naver.callback-url}")
-    private String callbackUrl;
+    private String naverCallbackUrl;
+
+    @Value("${kakao.rest-api-key}")
+    private String kakaoRestApiKey;
+
+    @Value("${kakao.client-secret}")
+    private String kakaoClientSecret;
+
+    @Value("${kakao.callback-url}")
+    private String kakaoCallbackUrl;
 
     private final UserRepository userRepository;
 
@@ -53,14 +71,24 @@ public class OAuth2LoginService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public String getNaverApiUrl(HttpSession session) throws UnsupportedEncodingException {
+    public String getNaverApiUrl(HttpSession session, SocialType socialType) throws UnsupportedEncodingException {
 
-        String redirectURI = URLEncoder.encode(callbackUrl, "UTF-8");
+        if(socialType.equals(SocialType.NAVER)){
+            return naverApiUrl(session);
+        }else if(socialType.equals(SocialType.KAKAO)){
+            return kakaoApiUrl();
+        }
+
+        return "";
+    }
+
+    private String naverApiUrl(HttpSession session) throws UnsupportedEncodingException {
+        String redirectURI = URLEncoder.encode(naverCallbackUrl, "UTF-8");
         SecureRandom random = new SecureRandom();
         String state = new BigInteger(130, random).toString();
 
         String apiURL = "https://nid.naver.com/oauth2.0/authorize?response_type=code"
-                + "&client_id=" + clientId
+                + "&client_id=" + naverClientId
                 + "&redirect_uri=" + redirectURI
                 + "&state=" + state;
 
@@ -69,16 +97,25 @@ public class OAuth2LoginService {
         return apiURL;
     }
 
+    private String kakaoApiUrl(){
+        String apiURL = "https://kauth.kakao.com/oauth/authorize?response_type=code"
+                + "&client_id=" + kakaoRestApiKey
+                + "&redirect_uri=" + kakaoCallbackUrl;
+        return apiURL;
+    };
+
+
+
 
     public UserLoginResponseDto naverLoginProcess(HttpServletRequest request) throws UnsupportedEncodingException{
 
         String code = request.getParameter("code");
         String state = request.getParameter("state");
-        String redirectURI = URLEncoder.encode(callbackUrl, "UTF-8");
+        String redirectURI = URLEncoder.encode(naverCallbackUrl, "UTF-8");
 
         String apiURL = "https://nid.naver.com/oauth2.0/token?grant_type=authorization_code"
-                + "&client_id=" + clientId
-                + "&client_secret=" + clientSecret
+                + "&client_id=" + naverClientId
+                + "&client_secret=" + naverClientSecret
                 + "&redirect_uri=" + redirectURI
                 + "&code=" + code
                 + "&state=" + state;
@@ -133,20 +170,17 @@ public class OAuth2LoginService {
                 String birthyear = naverUserInfo.get("birthyear").asText();
                 String mobile = naverUserInfo.get("mobile").asText();
 
-                /* DB에 사용자 정보가 없으며 저장한다.*/
-                User user = userRepository.findByUserId(id);
-                if(user == null){
-                    User newUser = User.builder()
-                            .userId(id)
-                            .password(passwordEncoder.encode("socialLogin"))
-                            .auth(UserRole.ADMIN.getValue())
-                            .image(profile_image)
-                            .name(aes256.encrypt(name))
-                            .socialType(SocialType.NAVER)
-                            .build();
+                /* DB에 사용자 정보 저장 or 업데이트*/
+                User newUser = User.builder()
+                        .userId(id)
+                        .password(passwordEncoder.encode("socialLogin"))
+                        .auth(UserRole.ADMIN.getValue())
+                        .image(profile_image)
+                        .name(aes256.encrypt(name))
+                        .socialType(SocialType.NAVER)
+                        .build();
 
-                    user = userRepository.save(newUser);
-                }
+                User user = userRepository.save(newUser);
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(id);
 
@@ -231,6 +265,170 @@ public class OAuth2LoginService {
             throw new RuntimeException("API 응답을 읽는데 실패");
         }
     }
+
+    public UserLoginResponseDto kakaoLoginProcess(HttpServletRequest request,String code) throws UnsupportedEncodingException{
+
+        //1. 인가 코드 받기(String code)
+
+        //2. accessToken 받기
+        String kakaoAccessToken = getAccessTokenKakao(code);
+
+        //3. 사용자 정보 받기
+        Map<String, Object> userInfo = getUserInfoKakao(kakaoAccessToken);
+
+        String email = (String) userInfo.get("email");
+        String profile_image = (String) userInfo.get("profile_image");
+        String nickname =  (String) userInfo.get("nickname");
+
+        /* DB에 사용자 정보 저장 or 업데이트*/
+        User newUser = User.builder()
+                .userId(email)
+                .password(passwordEncoder.encode("socialLogin"))
+                .auth(UserRole.ADMIN.getValue())
+                .image(profile_image)
+                .name(aes256.encrypt(nickname))
+                .socialType(SocialType.KAKAO)
+                .build();
+
+        User user = userRepository.save(newUser);
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, "socialLogin", userDetails.getAuthorities());
+        Authentication authentication = authenticationManager.authenticate(token);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String accessToken = jwt.createAccessToken(authentication);
+        String refreshToken = jwt.createRefreshToken(authentication);
+
+        return UserLoginResponseDto.builder()
+                .userId(user.getUserId())
+                .name(user.getName())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+    public String getAccessTokenKakao(String code){
+
+        String accessToken = "";
+        String refreshToken = "";
+        String regUrl = "https://kauth.kakao.com/oauth/token";
+
+        try{
+            URL url = new URL(regUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+            //필수 헤더 세팅
+            conn.setRequestProperty("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+            conn.setDoOutput(true);
+
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
+            StringBuilder sb = new StringBuilder();
+
+            //필수 쿼리 파라미터 세팅
+            sb.append("grant_type=authorization_code");
+            sb.append("&client_id=").append(kakaoRestApiKey);
+            sb.append("&client_secret=").append(kakaoClientSecret);
+            sb.append("&redirect_uri=").append(kakaoCallbackUrl);
+            sb.append("&code=").append(code);
+
+            bw.write(sb.toString());
+            bw.flush();
+
+            int responseCode = conn.getResponseCode();
+            log.info("[kakaoApi getAccessToen] responseCode = {}", responseCode);
+
+            BufferedReader br;
+            if(responseCode >= 200 && responseCode < 300){
+                br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            }else{
+                br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+
+            String line;
+            StringBuilder responseSb = new StringBuilder();
+
+            while((line = br.readLine()) != null){
+                responseSb.append(line);
+            }
+
+            String result = responseSb.toString();
+            log.info("responseBody = {}", result);
+
+            JsonParser parser = new JsonParser();
+            JsonElement element = parser.parse(result);
+
+            accessToken = element.getAsJsonObject().get("access_token").getAsString();
+            refreshToken = element.getAsJsonObject().get("refresh_token").getAsString();
+
+            br.close();
+            bw.close();
+
+        } catch (IOException e) {
+            throw new CustomException(ResultCode.OAUTH_LOGIN_EXCEPTION);
+        }
+
+        return accessToken;
+    }
+
+    private Map<String, Object> getUserInfoKakao(String accessToken){
+        Map<String, Object> userInfo = new HashMap<>();
+        String reqUrl = "https://kapi.kakao.com/v2/user/me";
+
+        try{
+            URL url= new URL(reqUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Authorization", "Bearer " + accessToken);
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+
+            int responseCode = conn.getResponseCode();
+            log.info("[kakao getUserInfo] responseCode : {}", responseCode);
+
+            BufferedReader br;
+            if(responseCode >= 200 && responseCode < 300){
+                br = new  BufferedReader(new InputStreamReader(conn.getInputStream()));
+            }else{
+                br = new  BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+
+            String line = "";
+            StringBuilder responseSb = new StringBuilder();
+            while((line = br.readLine()) != null){
+                responseSb.append(line);
+            }
+            String result = responseSb.toString();
+            log.info("responseBody = {}", result);
+
+            JsonParser parser = new JsonParser();
+            JsonElement element = parser.parse(result);
+
+            JsonObject properties = element.getAsJsonObject().get("properties").getAsJsonObject();
+            JsonObject kakaoAccount = element.getAsJsonObject().get("kakao_account").getAsJsonObject();
+
+            String nickname = properties.getAsJsonObject().get("nickname").getAsString();
+            String profile_image = properties.getAsJsonObject().get("profile_image").getAsString();
+            String email = kakaoAccount.getAsJsonObject().get("email").getAsString();
+
+            userInfo.put("nickname", nickname);
+            userInfo.put("email", email);
+            userInfo.put("profile_image", profile_image);
+
+            br.close();
+
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return userInfo;
+    }
+
+
+
+
+
 
 
 

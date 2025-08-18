@@ -29,11 +29,15 @@
 
         </form>
 
-        <button id="submitButton" class="btn btn-success submitBtn" th:onclick="login()">로그인</button>
+        <button id="submitButton" class="btn btn-secondary submitBtn" th:onclick="login()">로그인</button>
 
         <br>
 
-        <button id="naverLogin" class="btn btn-success submitBtn" th:onclick="goLogin()">네이버 로그인</button>
+        <button id="naverLogin" class="btn btn-success submitBtn" th:onclick="goLogin('NAVER')">네이버 로그인</button>
+
+        <br>
+
+        <button id="kakaoLogin" class="btn btn-warning submitBtn" th:onclick="goLogin('KAKAO')">카카오 로그인</button>
     </div>
 
     <th:block th:replace="~{common/bottom}"></th:block>
@@ -44,14 +48,14 @@
 
     <script>
 
-        async function goLogin(){
-            const apiURL = await getLoginUrlInfo();
+        async function goLogin(type){
+            const apiURL = await getLoginUrlInfo(type);
             console.log("apiURL", apiURL);
             location.href=apiURL;
         }
 
-        async function getLoginUrlInfo(){
-            const response = await fetch("/getNaverApiUrl", {method:"POST"})
+        async function getLoginUrlInfo(type){
+            const response = await fetch("/getNaverApiUrl", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({socialType:type})})
             return response.text();
         }
 
