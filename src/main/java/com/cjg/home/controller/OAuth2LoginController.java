@@ -28,10 +28,10 @@ public class OAuth2LoginController {
     @Value("${cookie.domain}")
     private String cookieDomain;
 
-    @PostMapping("/getNaverApiUrl")
+    @PostMapping("/login/oauth2/loginUrl")
     @ResponseBody
-    public String getNaverApiUrl(HttpSession session, @RequestBody @Valid ApiUrlDto dto) throws UnsupportedEncodingException {
-        return oAuth2LoginService.getNaverApiUrl(session, dto.getSocialType());
+    public String loginUrl(HttpSession session, @RequestBody @Valid ApiUrlDto dto) throws UnsupportedEncodingException {
+        return oAuth2LoginService.loginUrl(session, dto.getSocialType());
     }
 
 
@@ -65,6 +65,33 @@ public class OAuth2LoginController {
     @GetMapping("/login/oauth2/code/kakao")
     public RedirectView kakaoLoginProcess(HttpServletRequest request, HttpServletResponse response, @RequestParam String code) throws UnsupportedEncodingException {
         UserLoginResponseDto userLoginResponseDto = oAuth2LoginService.kakaoLoginProcess(request, code);
+
+        ResponseCookie responseCookie = ResponseCookie.from("accessToken",userLoginResponseDto.getAccessToken())
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                //.maxAge(60*30) 세션으로 설정
+                .domain(cookieDomain)
+                .build();
+
+        ResponseCookie responseCookie2 = ResponseCookie.from("refreshToken",userLoginResponseDto.getRefreshToken())
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                //.maxAge(60*60*10) 세션으로 설정
+                .domain(cookieDomain)
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie2.toString());
+
+        return new RedirectView("/post/list");
+
+    }
+
+    @GetMapping("/login/oauth2/code/google")
+    public RedirectView googleLoginProcess(HttpServletRequest request, HttpServletResponse response, @RequestParam String code) throws UnsupportedEncodingException {
+        UserLoginResponseDto userLoginResponseDto = oAuth2LoginService.googleLoginProcess(request, code);
 
         ResponseCookie responseCookie = ResponseCookie.from("accessToken",userLoginResponseDto.getAccessToken())
                 .httpOnly(true)

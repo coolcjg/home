@@ -38,6 +38,10 @@
         <br>
 
         <button id="kakaoLogin" class="btn btn-warning submitBtn" th:onclick="goLogin('KAKAO')">카카오 로그인</button>
+
+        <br>
+
+        <button id="googleLogin" class="btn btn-warning submitBtn" th:onclick="goLogin('GOOGLE')">구글 로그인</button>
     </div>
 
     <th:block th:replace="~{common/bottom}"></th:block>
@@ -55,7 +59,7 @@
         }
 
         async function getLoginUrlInfo(type){
-            const response = await fetch("/getNaverApiUrl", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({socialType:type})})
+            const response = await fetch("/login/oauth2/loginUrl", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({socialType:type})})
             return response.text();
         }
 

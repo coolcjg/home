@@ -59,6 +59,15 @@ public class OAuth2LoginService {
     @Value("${kakao.callback-url}")
     private String kakaoCallbackUrl;
 
+    @Value("${google.client-id}")
+    private String googleClientId;
+
+    @Value("${google.client-secret}")
+    private String googleClientSecret;
+
+    @Value("${google.callback-url}")
+    private String googleCallbackUrl;
+
     private final UserRepository userRepository;
 
     private final UserDetailsServiceImpl userDetailsService;
@@ -71,18 +80,20 @@ public class OAuth2LoginService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public String getNaverApiUrl(HttpSession session, SocialType socialType) throws UnsupportedEncodingException {
+    public String loginUrl(HttpSession session, SocialType socialType) throws UnsupportedEncodingException {
 
         if(socialType.equals(SocialType.NAVER)){
-            return naverApiUrl(session);
+            return naverLoginUrl(session);
         }else if(socialType.equals(SocialType.KAKAO)){
-            return kakaoApiUrl();
+            return kakaoLoginUrl();
+        }else if(socialType.equals(SocialType.GOOGLE)){
+            return googleLoginUrl();
         }
 
         return "";
     }
 
-    private String naverApiUrl(HttpSession session) throws UnsupportedEncodingException {
+    private String naverLoginUrl(HttpSession session) throws UnsupportedEncodingException {
         String redirectURI = URLEncoder.encode(naverCallbackUrl, "UTF-8");
         SecureRandom random = new SecureRandom();
         String state = new BigInteger(130, random).toString();
@@ -97,15 +108,18 @@ public class OAuth2LoginService {
         return apiURL;
     }
 
-    private String kakaoApiUrl(){
+    private String kakaoLoginUrl(){
         String apiURL = "https://kauth.kakao.com/oauth/authorize?response_type=code"
                 + "&client_id=" + kakaoRestApiKey
                 + "&redirect_uri=" + kakaoCallbackUrl;
         return apiURL;
     };
 
-
-
+    private String googleLoginUrl(){
+        return "https://accounts.google.com/o/oauth2/v2/auth?response_type=code&scope=email profile"
+                + "&client_id=" + googleClientId
+                + "&redirect_uri=" + googleCallbackUrl;
+    }
 
     public UserLoginResponseDto naverLoginProcess(HttpServletRequest request) throws UnsupportedEncodingException{
 
@@ -273,7 +287,7 @@ public class OAuth2LoginService {
         }
     }
 
-    public UserLoginResponseDto kakaoLoginProcess(HttpServletRequest request,String code) throws UnsupportedEncodingException{
+    public UserLoginResponseDto kakaoLoginProcess(HttpServletRequest request,String code) {
 
         //1. 인가 코드 받기(String code)
 
@@ -435,6 +449,167 @@ public class OAuth2LoginService {
         }
 
         return userInfo;
+    }
+
+
+    public UserLoginResponseDto googleLoginProcess(HttpServletRequest request,String code) {
+
+        //1. 인가 코드 받기(String code)
+
+        //2. accessToken 받기
+        String googleAccessToken = getAccessTokenGoogle(code);
+
+        //3. 사용자 정보 받기
+        Map<String, Object> userInfo = getUserInfoGoogle(googleAccessToken);
+        String email = (String) userInfo.get("email");
+        String name = (String) userInfo.get("name");
+        String picture =  (String) userInfo.get("picture");
+
+        /* DB에 사용자 정보 저장 or 업데이트*/
+        User user = userRepository.findByUserId(email);
+        if(user == null){
+            User newUser = User.builder()
+                    .userId(email)
+                    .password(passwordEncoder.encode("socialLogin"))
+                    .auth(UserRole.ADMIN.getValue())
+                    .image(picture)
+                    .name(aes256.encrypt(name))
+                    .socialType(SocialType.GOOGLE)
+                    .build();
+            user = userRepository.save(newUser);
+        }else{
+            user.setImage(picture);
+            user = userRepository.save(user);
+        }
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, "socialLogin", userDetails.getAuthorities());
+        Authentication authentication = authenticationManager.authenticate(token);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String accessToken = jwt.createAccessToken(authentication);
+        String refreshToken = jwt.createRefreshToken(authentication);
+
+        return UserLoginResponseDto.builder()
+                .userId(user.getUserId())
+                .name(user.getName())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+
+    }
+
+    private Map<String, Object> getUserInfoGoogle(String accessToken){
+        Map<String, Object> userInfo = new HashMap<>();
+        String reqUrl = "https://www.googleapis.com/userinfo/v2/me";
+
+        try{
+            URL url= new URL(reqUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Authorization", "Bearer " + accessToken);
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=utf-8");
+
+            int responseCode = conn.getResponseCode();
+            log.info("[google getUserInfo] responseCode : {}", responseCode);
+
+            BufferedReader br;
+            if(responseCode >= 200 && responseCode < 300){
+                br = new  BufferedReader(new InputStreamReader(conn.getInputStream()));
+            }else{
+                br = new  BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+
+            String line = "";
+            StringBuilder responseSb = new StringBuilder();
+            while((line = br.readLine()) != null){
+                responseSb.append(line);
+            }
+            String result = responseSb.toString();
+            log.info("responseBody = {}", result);
+
+            JsonParser parser = new JsonParser();
+            JsonElement element = parser.parse(result);
+
+            String id = element.getAsJsonObject().get("id").getAsString();
+            String email = element.getAsJsonObject().get("email").getAsString();
+            String picture = element.getAsJsonObject().get("picture").getAsString();
+
+            userInfo.put("id", id);
+            userInfo.put("email", email);
+            userInfo.put("picture", picture);
+
+            br.close();
+
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return userInfo;
+    }
+
+    public String getAccessTokenGoogle(String code){
+
+        String accessToken = "";
+        String refreshToken = "";
+        String regUrl = "https://oauth2.googleapis.com/token";
+
+        try{
+            URL url = new URL(regUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+            //필수 헤더 세팅
+            conn.setRequestProperty("Content-type", "application/x-www-form-urlencoded;charset=utf-8");
+            conn.setDoOutput(true);
+
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
+            StringBuilder sb = new StringBuilder();
+
+            //필수 쿼리 파라미터 세팅
+            sb.append("grant_type=authorization_code");
+            sb.append("&client_id=").append(googleClientId);
+            sb.append("&client_secret=").append(googleClientSecret);
+            sb.append("&redirect_uri=").append(googleCallbackUrl);
+            sb.append("&code=").append(code);
+
+            bw.write(sb.toString());
+            bw.flush();
+
+            int responseCode = conn.getResponseCode();
+            log.info("[googleApi getAccessToen] responseCode = {}", responseCode);
+
+            BufferedReader br;
+            if(responseCode >= 200 && responseCode < 300){
+                br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            }else{
+                br = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
+            }
+
+            String line;
+            StringBuilder responseSb = new StringBuilder();
+
+            while((line = br.readLine()) != null){
+                responseSb.append(line);
+            }
+
+            String result = responseSb.toString();
+            log.info("responseBody = {}", result);
+
+            JsonParser parser = new JsonParser();
+            JsonElement element = parser.parse(result);
+
+            accessToken = element.getAsJsonObject().get("access_token").getAsString();
+
+            br.close();
+            bw.close();
+
+        } catch (IOException e) {
+            throw new CustomException(ResultCode.OAUTH_LOGIN_EXCEPTION);
+        }
+
+        return accessToken;
     }
 
 
