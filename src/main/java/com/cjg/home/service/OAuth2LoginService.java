@@ -29,11 +29,11 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.math.BigInteger;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+
+
 
 @Log4j2
 @Service
@@ -176,7 +176,7 @@ public class OAuth2LoginService {
                 + "&state=" + state;
 
         try {
-            URL url = new URL(apiURL);
+            URL url = new URI(apiURL).toURL();
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             int responseCode = con.getResponseCode();
@@ -214,7 +214,8 @@ public class OAuth2LoginService {
             }
         }catch(IOException e) {
             throw new CustomException(ResultCode.OAUTH_LOGIN_EXCEPTION);
-
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
         }
 
         return accessToken_naver;
@@ -225,7 +226,7 @@ public class OAuth2LoginService {
 
         try{
             String url = "https://openapi.naver.com/v1/nid/me";
-            URL obj = new URL(url);
+            URL obj = new URI(url).toURL();
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
             con.setRequestMethod("GET");
 
@@ -306,7 +307,7 @@ public class OAuth2LoginService {
         String regUrl = "https://kauth.kakao.com/oauth/token";
 
         try{
-            URL url = new URL(regUrl);
+            URL url = new URI(regUrl).toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
             //필수 헤더 세팅
@@ -353,7 +354,7 @@ public class OAuth2LoginService {
             br.close();
             bw.close();
 
-        } catch (IOException e) {
+        } catch (IOException | URISyntaxException e) {
             throw new CustomException(ResultCode.OAUTH_LOGIN_EXCEPTION);
         }
 
@@ -365,7 +366,7 @@ public class OAuth2LoginService {
         String reqUrl = "https://kapi.kakao.com/v2/user/me";
 
         try{
-            URL url= new URL(reqUrl);
+            URL url= new URI(reqUrl).toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Authorization", "Bearer " + accessToken);
@@ -408,7 +409,7 @@ public class OAuth2LoginService {
 
             br.close();
 
-        } catch (IOException e) {
+        } catch (IOException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
 
@@ -426,7 +427,7 @@ public class OAuth2LoginService {
         String reqUrl = "https://www.googleapis.com/userinfo/v2/me";
         User user;
         try{
-            URL url= new URL(reqUrl);
+            URL url= new URI(reqUrl).toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Authorization", "Bearer " + accessToken);
@@ -466,7 +467,7 @@ public class OAuth2LoginService {
 
             br.close();
 
-        } catch (IOException e) {
+        } catch (IOException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
 
@@ -480,7 +481,7 @@ public class OAuth2LoginService {
         String regUrl = "https://oauth2.googleapis.com/token";
 
         try{
-            URL url = new URL(regUrl);
+            URL url = new URI(regUrl).toURL();
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
             //필수 헤더 세팅
@@ -528,6 +529,8 @@ public class OAuth2LoginService {
 
         } catch (IOException e) {
             throw new CustomException(ResultCode.OAUTH_LOGIN_EXCEPTION);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
         }
 
         return accessToken;
