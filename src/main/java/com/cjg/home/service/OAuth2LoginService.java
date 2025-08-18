@@ -120,11 +120,12 @@ public class OAuth2LoginService {
     }
 
     public UserLoginResponseDto naverLoginProcess(HttpServletRequest request) throws UnsupportedEncodingException{
-
         String accessToken_naver = getAccessTokenNaver(request);
-
         User userInfo = getUserInfoNaver(accessToken_naver);
+        return getUserLoginResopnseDtoForSocial(userInfo);
+    }
 
+    private UserLoginResponseDto getUserLoginResopnseDtoForSocial(User userInfo){
         /* DB에 사용자 정보 저장 or 업데이트*/
         User user = userRepository.findByUserId(userInfo.getUserId());
         if(user == null){
@@ -134,7 +135,7 @@ public class OAuth2LoginService {
                     .auth(UserRole.ADMIN.getValue())
                     .image(userInfo.getImage())
                     .name(aes256.encrypt(userInfo.getName()))
-                    .socialType(SocialType.NAVER)
+                    .socialType(userInfo.getSocialType())
                     .build();
 
             user = userRepository.save(newUser);
@@ -259,7 +260,7 @@ public class OAuth2LoginService {
                     String birthyear = result.getAsJsonObject().get("birthyear").getAsString();
                     String mobile = result.getAsJsonObject().get("mobile").getAsString();
 
-                    return User.builder().userId(id).name(name).image(profile_image).build();
+                    return User.builder().userId(id).name(name).image(profile_image).socialType(SocialType.NAVER).build();
 
                 }
             }else{
@@ -293,45 +294,9 @@ public class OAuth2LoginService {
     }
 
     public UserLoginResponseDto kakaoLoginProcess(HttpServletRequest request,String code) {
-        //1. 인가 코드 받기(String code)
-
-        //2. accessToken 받기
         String kakaoAccessToken = getAccessTokenKakao(code);
-
-        //3. 사용자 정보 받기
         User userInfo = getUserInfoKakao(kakaoAccessToken);
-
-        /* DB에 사용자 정보 저장 or 업데이트*/
-        User user = userRepository.findByUserId(userInfo.getUserId());
-        if(user == null){
-            User newUser = User.builder()
-                    .userId(userInfo.getUserId())
-                    .password(passwordEncoder.encode("socialLogin"))
-                    .auth(UserRole.ADMIN.getValue())
-                    .image(userInfo.getImage())
-                    .name(aes256.encrypt(userInfo.getName()))
-                    .socialType(SocialType.KAKAO)
-                    .build();
-            user = userRepository.save(newUser);
-        }else{
-            user.setImage(userInfo.getImage());
-            user = userRepository.save(user);
-        }
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUserId());
-
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, "socialLogin", userDetails.getAuthorities());
-        Authentication authentication = authenticationManager.authenticate(token);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String accessToken = jwt.createAccessToken(authentication);
-        String refreshToken = jwt.createRefreshToken(authentication);
-
-        return UserLoginResponseDto.builder()
-                .userId(user.getUserId())
-                .name(user.getName())
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
+        return getUserLoginResopnseDtoForSocial(userInfo);
     }
 
     public String getAccessTokenKakao(String code){
@@ -437,7 +402,9 @@ public class OAuth2LoginService {
             user = User.builder()
                         .userId(email)
                         .name(nickname)
-                        .image(profile_image).build();
+                        .image(profile_image)
+                        .socialType(SocialType.KAKAO)
+                        .build();
 
             br.close();
 
@@ -450,47 +417,9 @@ public class OAuth2LoginService {
 
 
     public UserLoginResponseDto googleLoginProcess(HttpServletRequest request,String code) {
-
-        //1. 인가 코드 받기(String code)
-
-        //2. accessToken 받기
         String googleAccessToken = getAccessTokenGoogle(code);
-
-        //3. 사용자 정보 받기
         User userInfo = getUserInfoGoogle(googleAccessToken);
-
-        /* DB에 사용자 정보 저장 or 업데이트*/
-        User user = userRepository.findByUserId(userInfo.getUserId());
-        if(user == null){
-            User newUser = User.builder()
-                    .userId(userInfo.getUserId())
-                    .password(passwordEncoder.encode("socialLogin"))
-                    .auth(UserRole.ADMIN.getValue())
-                    .image(userInfo.getImage())
-                    .name(aes256.encrypt(userInfo.getName()))
-                    .socialType(SocialType.GOOGLE)
-                    .build();
-            user = userRepository.save(newUser);
-        }else{
-            user.setImage(userInfo.getImage());
-            user = userRepository.save(user);
-        }
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUserId());
-
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, "socialLogin", userDetails.getAuthorities());
-        Authentication authentication = authenticationManager.authenticate(token);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String accessToken = jwt.createAccessToken(authentication);
-        String refreshToken = jwt.createRefreshToken(authentication);
-
-        return UserLoginResponseDto.builder()
-                .userId(user.getUserId())
-                .name(user.getName())
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .build();
-
+        return getUserLoginResopnseDtoForSocial(userInfo);
     }
 
     private User getUserInfoGoogle(String accessToken){
@@ -531,7 +460,9 @@ public class OAuth2LoginService {
             user = User.builder()
                         .userId(email)
                         .name(name)
-                        .image(picture).build();
+                        .image(picture)
+                        .socialType(SocialType.GOOGLE)
+                        .build();
 
             br.close();
 
