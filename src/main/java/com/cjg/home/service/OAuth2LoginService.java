@@ -171,16 +171,23 @@ public class OAuth2LoginService {
                 String mobile = naverUserInfo.get("mobile").asText();
 
                 /* DB에 사용자 정보 저장 or 업데이트*/
-                User newUser = User.builder()
-                        .userId(id)
-                        .password(passwordEncoder.encode("socialLogin"))
-                        .auth(UserRole.ADMIN.getValue())
-                        .image(profile_image)
-                        .name(aes256.encrypt(name))
-                        .socialType(SocialType.NAVER)
-                        .build();
+                User user = userRepository.findByUserId(id);
+                if(user == null){
+                    User newUser = User.builder()
+                            .userId(id)
+                            .password(passwordEncoder.encode("socialLogin"))
+                            .auth(UserRole.ADMIN.getValue())
+                            .image(profile_image)
+                            .name(aes256.encrypt(name))
+                            .socialType(SocialType.NAVER)
+                            .build();
 
-                User user = userRepository.save(newUser);
+                    user = userRepository.save(newUser);
+                }else{
+                    user.setImage(profile_image);
+                    user = userRepository.save(user);
+                }
+
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(id);
 
@@ -281,16 +288,21 @@ public class OAuth2LoginService {
         String nickname =  (String) userInfo.get("nickname");
 
         /* DB에 사용자 정보 저장 or 업데이트*/
-        User newUser = User.builder()
-                .userId(email)
-                .password(passwordEncoder.encode("socialLogin"))
-                .auth(UserRole.ADMIN.getValue())
-                .image(profile_image)
-                .name(aes256.encrypt(nickname))
-                .socialType(SocialType.KAKAO)
-                .build();
-
-        User user = userRepository.save(newUser);
+        User user = userRepository.findByUserId(email);
+        if(user == null){
+            User newUser = User.builder()
+                    .userId(email)
+                    .password(passwordEncoder.encode("socialLogin"))
+                    .auth(UserRole.ADMIN.getValue())
+                    .image(profile_image)
+                    .name(aes256.encrypt(nickname))
+                    .socialType(SocialType.KAKAO)
+                    .build();
+            user = userRepository.save(newUser);
+        }else{
+            user.setImage(profile_image);
+            user = userRepository.save(user);
+        }
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
