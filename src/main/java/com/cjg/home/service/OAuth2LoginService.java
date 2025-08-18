@@ -288,37 +288,32 @@ public class OAuth2LoginService {
     }
 
     public UserLoginResponseDto kakaoLoginProcess(HttpServletRequest request,String code) {
-
         //1. 인가 코드 받기(String code)
 
         //2. accessToken 받기
         String kakaoAccessToken = getAccessTokenKakao(code);
 
         //3. 사용자 정보 받기
-        Map<String, Object> userInfo = getUserInfoKakao(kakaoAccessToken);
-
-        String email = (String) userInfo.get("email");
-        String profile_image = (String) userInfo.get("profile_image");
-        String nickname =  (String) userInfo.get("nickname");
+        User userInfo = getUserInfoKakao(kakaoAccessToken);
 
         /* DB에 사용자 정보 저장 or 업데이트*/
-        User user = userRepository.findByUserId(email);
+        User user = userRepository.findByUserId(userInfo.getUserId());
         if(user == null){
             User newUser = User.builder()
-                    .userId(email)
+                    .userId(userInfo.getUserId())
                     .password(passwordEncoder.encode("socialLogin"))
                     .auth(UserRole.ADMIN.getValue())
-                    .image(profile_image)
-                    .name(aes256.encrypt(nickname))
+                    .image(userInfo.getImage())
+                    .name(aes256.encrypt(userInfo.getName()))
                     .socialType(SocialType.KAKAO)
                     .build();
             user = userRepository.save(newUser);
         }else{
-            user.setImage(profile_image);
+            user.setImage(userInfo.getImage());
             user = userRepository.save(user);
         }
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUserId());
 
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, "socialLogin", userDetails.getAuthorities());
         Authentication authentication = authenticationManager.authenticate(token);
@@ -397,8 +392,8 @@ public class OAuth2LoginService {
         return accessToken;
     }
 
-    private Map<String, Object> getUserInfoKakao(String accessToken){
-        Map<String, Object> userInfo = new HashMap<>();
+    private User getUserInfoKakao(String accessToken){
+        User user;
         String reqUrl = "https://kapi.kakao.com/v2/user/me";
 
         try{
@@ -436,19 +431,18 @@ public class OAuth2LoginService {
             String profile_image = properties.getAsJsonObject().get("profile_image").getAsString();
             String email = kakaoAccount.getAsJsonObject().get("email").getAsString();
 
-            userInfo.put("nickname", nickname);
-            userInfo.put("email", email);
-            userInfo.put("profile_image", profile_image);
+            user = User.builder()
+                        .userId(email)
+                        .name(nickname)
+                        .image(profile_image).build();
 
             br.close();
 
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
 
-        return userInfo;
+        return user;
     }
 
 
@@ -460,29 +454,26 @@ public class OAuth2LoginService {
         String googleAccessToken = getAccessTokenGoogle(code);
 
         //3. 사용자 정보 받기
-        Map<String, Object> userInfo = getUserInfoGoogle(googleAccessToken);
-        String email = (String) userInfo.get("email");
-        String name = (String) userInfo.get("name");
-        String picture =  (String) userInfo.get("picture");
+        User userInfo = getUserInfoGoogle(googleAccessToken);
 
         /* DB에 사용자 정보 저장 or 업데이트*/
-        User user = userRepository.findByUserId(email);
+        User user = userRepository.findByUserId(userInfo.getUserId());
         if(user == null){
             User newUser = User.builder()
-                    .userId(email)
+                    .userId(userInfo.getUserId())
                     .password(passwordEncoder.encode("socialLogin"))
                     .auth(UserRole.ADMIN.getValue())
-                    .image(picture)
-                    .name(aes256.encrypt(name))
+                    .image(userInfo.getImage())
+                    .name(aes256.encrypt(userInfo.getName()))
                     .socialType(SocialType.GOOGLE)
                     .build();
             user = userRepository.save(newUser);
         }else{
-            user.setImage(picture);
+            user.setImage(userInfo.getImage());
             user = userRepository.save(user);
         }
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUserId());
 
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, "socialLogin", userDetails.getAuthorities());
         Authentication authentication = authenticationManager.authenticate(token);
@@ -499,10 +490,9 @@ public class OAuth2LoginService {
 
     }
 
-    private Map<String, Object> getUserInfoGoogle(String accessToken){
-        Map<String, Object> userInfo = new HashMap<>();
+    private User getUserInfoGoogle(String accessToken){
         String reqUrl = "https://www.googleapis.com/userinfo/v2/me";
-
+        User user;
         try{
             URL url= new URL(reqUrl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -533,11 +523,13 @@ public class OAuth2LoginService {
 
             String id = element.getAsJsonObject().get("id").getAsString();
             String email = element.getAsJsonObject().get("email").getAsString();
+            String name = element.getAsJsonObject().get("name").getAsString();
             String picture = element.getAsJsonObject().get("picture").getAsString();
 
-            userInfo.put("id", id);
-            userInfo.put("email", email);
-            userInfo.put("picture", picture);
+            user = User.builder()
+                        .userId(email)
+                        .name(name)
+                        .image(picture).build();
 
             br.close();
 
@@ -547,7 +539,7 @@ public class OAuth2LoginService {
             throw new RuntimeException(e);
         }
 
-        return userInfo;
+        return user;
     }
 
     public String getAccessTokenGoogle(String code){
