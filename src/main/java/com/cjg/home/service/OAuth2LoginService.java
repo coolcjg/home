@@ -29,12 +29,11 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.math.BigInteger;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.cjg.home.domain.QUser.user;
 
 @Log4j2
 @Service
@@ -94,7 +93,7 @@ public class OAuth2LoginService {
     }
 
     private String naverLoginUrl(HttpSession session) throws UnsupportedEncodingException {
-        String redirectURI = URLEncoder.encode(naverCallbackUrl, "UTF-8");
+        String redirectURI = URLEncoder.encode(naverCallbackUrl, StandardCharsets.UTF_8);
         SecureRandom random = new SecureRandom();
         String state = new BigInteger(130, random).toString();
 
@@ -109,10 +108,9 @@ public class OAuth2LoginService {
     }
 
     private String kakaoLoginUrl(){
-        String apiURL = "https://kauth.kakao.com/oauth/authorize?response_type=code"
+        return "https://kauth.kakao.com/oauth/authorize?response_type=code"
                 + "&client_id=" + kakaoRestApiKey
                 + "&redirect_uri=" + kakaoCallbackUrl;
-        return apiURL;
     };
 
     private String googleLoginUrl(){
@@ -123,9 +121,51 @@ public class OAuth2LoginService {
 
     public UserLoginResponseDto naverLoginProcess(HttpServletRequest request) throws UnsupportedEncodingException{
 
+        String accessToken_naver = getAccessTokenNaver(request);
+
+        User userInfo = getUserInfoNaver(accessToken_naver);
+
+        /* DB에 사용자 정보 저장 or 업데이트*/
+        User user = userRepository.findByUserId(userInfo.getUserId());
+        if(user == null){
+            User newUser = User.builder()
+                    .userId(userInfo.getUserId())
+                    .password(passwordEncoder.encode("socialLogin"))
+                    .auth(UserRole.ADMIN.getValue())
+                    .image(userInfo.getImage())
+                    .name(aes256.encrypt(userInfo.getName()))
+                    .socialType(SocialType.NAVER)
+                    .build();
+
+            user = userRepository.save(newUser);
+        }else{
+            user.setImage(userInfo.getImage());
+            user = userRepository.save(user);
+        }
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getUserId());
+
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, "socialLogin", userDetails.getAuthorities());
+        Authentication authentication = authenticationManager.authenticate(token);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String accessToken = jwt.createAccessToken(authentication);
+        String refreshToken = jwt.createRefreshToken(authentication);
+
+        return UserLoginResponseDto.builder()
+                .userId(user.getUserId())
+                .name(user.getName())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .build();
+    }
+
+
+    public String getAccessTokenNaver(HttpServletRequest request) throws UnsupportedEncodingException {
+
+        String accessToken_naver="";
         String code = request.getParameter("code");
         String state = request.getParameter("state");
-        String redirectURI = URLEncoder.encode(naverCallbackUrl, "UTF-8");
+        String redirectURI = URLEncoder.encode(naverCallbackUrl, StandardCharsets.UTF_8);
 
         String apiURL = "https://nid.naver.com/oauth2.0/token?grant_type=authorization_code"
                 + "&client_id=" + naverClientId
@@ -134,16 +174,15 @@ public class OAuth2LoginService {
                 + "&code=" + code
                 + "&state=" + state;
 
-        try{
+        try {
             URL url = new URL(apiURL);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             int responseCode = con.getResponseCode();
             BufferedReader br;
-            System.out.println("responseCode = " + responseCode);
-            if(responseCode == 200){
+            if (responseCode == 200) {
                 br = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            }else{
+            } else {
                 br = new BufferedReader(new InputStreamReader(con.getErrorStream()));
             }
 
@@ -157,77 +196,31 @@ public class OAuth2LoginService {
             br.close();
 
             // access token 요청에 대한 응답을 정상적으로 받았다면,
-            if(responseCode == 200){
+            if (responseCode == 200) {
 
                 ObjectMapper objectMapper = new ObjectMapper();
                 JsonNode jsonNode = objectMapper.readTree(res.toString());
                 log.debug(jsonNode.toString());
 
-                String accessToken_naver = jsonNode.get("access_token").asText();
+                accessToken_naver = jsonNode.get("access_token").asText();
                 String refreshToken_naver = jsonNode.get("refresh_token").asText();
 
                 log.info("accessToken : " + accessToken_naver);
                 log.info("refreshToken : " + refreshToken_naver);
 
-                /** access token으로 상요자 정보 요청 후 응답 받기 **/
-                JsonNode naverUserInfo = getUserInfo(accessToken_naver);
+            }else{
+                throw new CustomException(ResultCode.OAUTH_ACCESS_TOKEN_EXCEPTION);
+            }
+        }catch(IOException e) {
+            throw new CustomException(ResultCode.OAUTH_LOGIN_EXCEPTION);
 
-                String id = naverUserInfo.get("id").asText();
-                String nickname = naverUserInfo.get("name").asText();
-                String name = naverUserInfo.get("name").asText();
-                String email =  naverUserInfo.get("email").asText();
-                String gender = naverUserInfo.get("gender").asText();
-
-                String age = naverUserInfo.get("age").asText();
-                String birthday = naverUserInfo.get("birthday").asText();
-                String profile_image = naverUserInfo.get("profile_image").asText();
-                String birthyear = naverUserInfo.get("birthyear").asText();
-                String mobile = naverUserInfo.get("mobile").asText();
-
-                /* DB에 사용자 정보 저장 or 업데이트*/
-                User user = userRepository.findByUserId(id);
-                if(user == null){
-                    User newUser = User.builder()
-                            .userId(id)
-                            .password(passwordEncoder.encode("socialLogin"))
-                            .auth(UserRole.ADMIN.getValue())
-                            .image(profile_image)
-                            .name(aes256.encrypt(name))
-                            .socialType(SocialType.NAVER)
-                            .build();
-
-                    user = userRepository.save(newUser);
-                }else{
-                    user.setImage(profile_image);
-                    user = userRepository.save(user);
-                }
-
-
-                UserDetails userDetails = userDetailsService.loadUserByUsername(id);
-
-                UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails, "socialLogin", userDetails.getAuthorities());
-                Authentication authentication = authenticationManager.authenticate(token);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                String accessToken = jwt.createAccessToken(authentication);
-                String refreshToken = jwt.createRefreshToken(authentication);
-
-                return UserLoginResponseDto.builder()
-                        .userId(user.getUserId())
-                        .name(user.getName())
-                        .accessToken(accessToken)
-                        .refreshToken(refreshToken)
-                        .build();
-           }
-
-        } catch(IOException e) {
-            log.error("naver login error", e);
         }
 
-        return null;
+        return accessToken_naver;
     }
 
 
-    public JsonNode getUserInfo(String token){
+    public User getUserInfoNaver(String token){
 
         try{
             String url = "https://openapi.naver.com/v1/nid/me";
@@ -240,33 +233,45 @@ public class OAuth2LoginService {
             con.setRequestProperty("Authorization", "Bearer " + token);
 
             int responseCode = con.getResponseCode();
-            log.debug("ResponseCode : " +  responseCode);
+            log.info("ResponseCode : " +  responseCode);
 
             if(responseCode == HttpURLConnection.HTTP_OK){
                 String res = readBody(con.getInputStream());
 
-                log.debug("userinfo = " + res);
-                ObjectMapper objectMapper = new ObjectMapper();
-                JsonNode jsonNode = objectMapper.readTree(res.toString());
-                final String SUCCESS_CODE = "00";
-                final String SUCCESS_MESSAGE = "success";
-                if(SUCCESS_CODE.equals(jsonNode.get("resultcode").asText())
-                        && SUCCESS_MESSAGE.equals(jsonNode.get("message").asText())){
-                    return jsonNode.get("response");
+                log.info("userinfo : {}", res);
+                JsonElement element = JsonParser.parseString(res);
+
+                final String SUCCESS_CODE = element.getAsJsonObject().get("resultcode").getAsString();
+                final String SUCCESS_MESSAGE = element.getAsJsonObject().get("message").getAsString();
+
+                if(SUCCESS_CODE.equals("00") && SUCCESS_MESSAGE.equals("success")){
+                    JsonObject result = element.getAsJsonObject().getAsJsonObject("response");
+
+                    String id = result.getAsJsonObject().get("id").getAsString();
+                    String nickname = result.getAsJsonObject().get("nickname").getAsString();
+                    String name = result.getAsJsonObject().get("name").getAsString();
+                    String email =  result.getAsJsonObject().get("email").getAsString();
+                    String gender = result.getAsJsonObject().get("gender").getAsString();
+
+                    String age = result.getAsJsonObject().get("age").getAsString();
+                    String birthday = result.getAsJsonObject().get("birthday").getAsString();
+                    String profile_image = result.getAsJsonObject().get("profile_image").getAsString();
+                    String birthyear = result.getAsJsonObject().get("birthyear").getAsString();
+                    String mobile = result.getAsJsonObject().get("mobile").getAsString();
+
+                    return User.builder().userId(id).name(name).image(profile_image).build();
+
                 }
             }else{
-                ObjectMapper objectMapper = new ObjectMapper();
-                JsonNode jsonNode = objectMapper.readTree(readBody(con.getErrorStream()));
-                return jsonNode;
+                throw new CustomException(ResultCode.OAUTH_USER_INFO_EXCEPTION);
             }
 
         }catch(Exception e){
-            e.printStackTrace();
+            throw new CustomException(ResultCode.OAUTH_LOGIN_EXCEPTION);
 
         }
 
-        return null;
-
+        throw new CustomException(ResultCode.OAUTH_LOGIN_EXCEPTION);
     }
 
     private String readBody(InputStream body)  {
@@ -344,16 +349,15 @@ public class OAuth2LoginService {
             conn.setDoOutput(true);
 
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
-            StringBuilder sb = new StringBuilder();
 
             //필수 쿼리 파라미터 세팅
-            sb.append("grant_type=authorization_code");
-            sb.append("&client_id=").append(kakaoRestApiKey);
-            sb.append("&client_secret=").append(kakaoClientSecret);
-            sb.append("&redirect_uri=").append(kakaoCallbackUrl);
-            sb.append("&code=").append(code);
+            String sb = "grant_type=authorization_code" +
+                    "&client_id=" + kakaoRestApiKey +
+                    "&client_secret=" + kakaoClientSecret +
+                    "&redirect_uri=" + kakaoCallbackUrl +
+                    "&code=" + code;
 
-            bw.write(sb.toString());
+            bw.write(sb);
             bw.flush();
 
             int responseCode = conn.getResponseCode();
@@ -376,8 +380,7 @@ public class OAuth2LoginService {
             String result = responseSb.toString();
             log.info("responseBody = {}", result);
 
-            JsonParser parser = new JsonParser();
-            JsonElement element = parser.parse(result);
+            JsonElement element = JsonParser.parseString(result);
 
             accessToken = element.getAsJsonObject().get("access_token").getAsString();
             refreshToken = element.getAsJsonObject().get("refresh_token").getAsString();
@@ -421,8 +424,8 @@ public class OAuth2LoginService {
             String result = responseSb.toString();
             log.info("responseBody = {}", result);
 
-            JsonParser parser = new JsonParser();
-            JsonElement element = parser.parse(result);
+
+            JsonElement element = JsonParser.parseString(result);
 
             JsonObject properties = element.getAsJsonObject().get("properties").getAsJsonObject();
             JsonObject kakaoAccount = element.getAsJsonObject().get("kakao_account").getAsJsonObject();
@@ -518,8 +521,7 @@ public class OAuth2LoginService {
             String result = responseSb.toString();
             log.info("responseBody = {}", result);
 
-            JsonParser parser = new JsonParser();
-            JsonElement element = parser.parse(result);
+            JsonElement element = JsonParser.parseString(result);
 
             String id = element.getAsJsonObject().get("id").getAsString();
             String email = element.getAsJsonObject().get("email").getAsString();
@@ -533,8 +535,6 @@ public class OAuth2LoginService {
 
             br.close();
 
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -557,16 +557,15 @@ public class OAuth2LoginService {
             conn.setDoOutput(true);
 
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(conn.getOutputStream()));
-            StringBuilder sb = new StringBuilder();
 
             //필수 쿼리 파라미터 세팅
-            sb.append("grant_type=authorization_code");
-            sb.append("&client_id=").append(googleClientId);
-            sb.append("&client_secret=").append(googleClientSecret);
-            sb.append("&redirect_uri=").append(googleCallbackUrl);
-            sb.append("&code=").append(code);
+            String sb = "grant_type=authorization_code" +
+                    "&client_id=" + googleClientId +
+                    "&client_secret=" + googleClientSecret +
+                    "&redirect_uri=" + googleCallbackUrl +
+                    "&code=" + code;
 
-            bw.write(sb.toString());
+            bw.write(sb);
             bw.flush();
 
             int responseCode = conn.getResponseCode();
@@ -589,8 +588,7 @@ public class OAuth2LoginService {
             String result = responseSb.toString();
             log.info("responseBody = {}", result);
 
-            JsonParser parser = new JsonParser();
-            JsonElement element = parser.parse(result);
+            JsonElement element = JsonParser.parseString(result);
 
             accessToken = element.getAsJsonObject().get("access_token").getAsString();
 

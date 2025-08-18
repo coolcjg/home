@@ -63,7 +63,9 @@ public enum ResultCode {
     COMMENT_INVALID_AUTH(HttpStatus.NOT_FOUND, "댓글 권한이 없습니다"),
 
     OAUTH_LOGIN_INVALID_SOCIAL_TYPE(HttpStatus.BAD_REQUEST, "미등록된 OAuth2로그인 제공자"),
-    OAUTH_LOGIN_EXCEPTION(HttpStatus.BAD_REQUEST, "로그인 처리중 에러");
+    OAUTH_LOGIN_EXCEPTION(HttpStatus.BAD_REQUEST, "로그인 처리중 에러"),
+    OAUTH_ACCESS_TOKEN_EXCEPTION(HttpStatus.BAD_REQUEST, "OAUTH2 ACCESS토큰 에러"),
+    OAUTH_USER_INFO_EXCEPTION(HttpStatus.BAD_REQUEST, "OAUTH2 사용자 정보 에러");
 
     private final HttpStatus httpStatus;
     private final String message;
