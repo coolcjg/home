@@ -17,6 +17,8 @@ import com.cjg.home.util.AES256;
 import com.cjg.home.util.AuthCheck;
 import com.cjg.home.util.DateToString;
 import com.cjg.home.util.PageUtil;
+import com.cjg.home.util.kafka.KafkaProducer;
+import com.google.gson.Gson;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -41,11 +43,15 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final SubscribeService subscribeService;
     private final DateToString dateToString;
+    private final KafkaProducer kafkaProducer;
     private final AES256 aes256;
     private final AuthCheck auth;
 
     @Value("${image.url.prefix}")
     private String imageUrlPrefix;
+
+    @Value("${topic.name}")
+    private String topicName;
 
     public PostListResponseDto list(PostListRequestDto dto){
         Pageable pageable = PageRequest.of(dto.getPageNumber()-1, dto.getPageSize(), Sort.Direction.DESC, "regDate");
@@ -123,7 +129,7 @@ public class PostService {
 
         Post result = postRepository.save(post);
 
-        return PostResponseDto.builder()
+        PostResponseDto response = PostResponseDto.builder()
                 .postId(result.getPostId())
                 .userId(result.getUser().getUserId())
                 .title(result.getTitle())
@@ -133,6 +139,10 @@ public class PostService {
                 .regDate(dateToString.apply(result.getRegDate()))
                 .modDate(dateToString.apply(result.getModDate()))
                 .build();
+
+        kafkaProducer.create(topicName, new Gson().toJson(response));
+
+        return response;
     }
 
     @Transactional
