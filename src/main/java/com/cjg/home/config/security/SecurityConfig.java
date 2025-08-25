@@ -50,6 +50,9 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/login/oauth2/code/*").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/login/oauth2/loginUrl").permitAll()
 
+                                //구글 개발자도구 에러용
+                                .requestMatchers(HttpMethod.GET, "/index.html", "/manage/account/login", "/admin/index.html", "/web/").permitAll()
+
                                 //에러페이지 표시하기위해 설정
                                 .requestMatchers("/error").permitAll()
                                 .anyRequest().authenticated()

@@ -4,10 +4,7 @@ import com.cjg.home.code.ResultCode;
 import com.cjg.home.domain.Comment;
 import com.cjg.home.domain.CustomUserDetails;
 import com.cjg.home.domain.Post;
-import com.cjg.home.dto.request.PostDeleteRequestDto;
-import com.cjg.home.dto.request.PostListRequestDto;
-import com.cjg.home.dto.request.PostModifyRequestDto;
-import com.cjg.home.dto.request.PostSaveRequestDto;
+import com.cjg.home.dto.request.*;
 import com.cjg.home.dto.response.CommentResponseDto;
 import com.cjg.home.dto.response.PageItem;
 import com.cjg.home.dto.response.PostListResponseDto;
@@ -42,6 +39,7 @@ public class PostService {
     private final UserService userService;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final SubscribeService subscribeService;
     private final DateToString dateToString;
     private final AES256 aes256;
     private final AuthCheck auth;
@@ -155,6 +153,16 @@ public class PostService {
                 }
             }
         }
+    }
+
+    public boolean subscribeStatus(CustomUserDetails customUserDetails, Long postId){
+        Post post = postRepository.findById(postId).orElseThrow(()-> new CustomViewException(ResultCode.POST_SEARCH_NOT_FOUND));
+
+        SubscribeRequestDto ssrd = SubscribeRequestDto.builder()
+                .userId(customUserDetails.getUsername())
+                .targetUserId(post.getUser().getUserId()).build();
+
+        return  subscribeService.isSubscribe(ssrd);
     }
 
     @Transactional

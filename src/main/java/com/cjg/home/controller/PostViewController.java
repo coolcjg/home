@@ -5,6 +5,7 @@ import com.cjg.home.domain.CustomUserDetails;
 import com.cjg.home.dto.request.PostListRequestDto;
 import com.cjg.home.exception.CustomViewException;
 import com.cjg.home.service.PostService;
+import com.cjg.home.service.SubscribeService;
 import com.cjg.home.util.AuthCheck;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -23,6 +24,7 @@ public class PostViewController {
 
     private final PostService postService;
     private final AuthCheck authCheck;
+    private final SubscribeService subscribeService;
 
     @GetMapping(value = "/")
     public RedirectView home(){
@@ -57,6 +59,7 @@ public class PostViewController {
     @GetMapping(value = "/post/{postId}")
     public String view(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long postId, Model model){
         model.addAttribute("data", postService.view(customUserDetails, postId));
+        model.addAttribute("subscribeStatus", postService.subscribeStatus(customUserDetails, postId));
         return "post/view";
     }
 

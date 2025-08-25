@@ -25,6 +25,10 @@
                     <img th:src="${data.image}" class="img-thumbnail post-nav-image" alt="">
                     <div class="mx-3" th:text="|${data.name}(${data.userId})|"></div>
                     <div class="mx-3" th:text="${data.regDate}"></div>
+                    <div>
+                        <button th:classappend ="${subscribeStatus == true} ? '':'d-none'" type="button" id="unSubButton" class="btn btn-outline-primary btn-sm" th:onclick="unSubscribe([[${#authentication.name}]], [[${data.userId}]])">구독취소</button>
+                        <button th:classappend ="${subscribeStatus == false} ? '' : 'd-none'" type="button" id="subButton" class="btn btn-outline-primary btn-sm" th:onclick="subscribe([[${#authentication.name}]], [[${data.userId}]])">구독</button>
+                    </div>
                 </div>
             </div>
 
@@ -93,6 +97,83 @@
     <script src="/js/common.js"></script>
 
     <script>
+
+        function unSubscribe(userId, targetUserId){
+
+            if(confirm('구독취소하시겠습니까?')){
+                const json = JSON.stringify({
+                    userId : userId
+                    , targetUserId : targetUserId
+                });
+
+                $.ajax({
+                    url: "/subscribe",
+                    type: "DELETE",
+                    dataType: 'json',
+                    contentType: 'application/json; charset=utf-8',
+                    data : json,
+                    success: function (data, status, xhr) {
+                        if(data.code === "200"){
+                            alert('구독 취소 성공');
+                            console.log(data);
+
+                            $("#subButton").addClass("d-none");
+                            $("#unSubButton").addClass("d-none");
+
+                            $("#subButton").removeClass("d-none");
+
+                        }else{
+                            alert('구독 취소 실패');
+                            console.log(data);
+                        }
+                    },
+                    error: function (data, status, xhr) {
+                        alert(data.responseJSON.message);
+                    },
+                });
+            }
+        }
+
+
+        function subscribe(userId, targetUserId){
+            if(userId === 'anonymousUser'){
+                alert('로그인해주세요.');
+                location.href="/user/login";
+                return;
+            }
+
+            const json = JSON.stringify({
+                userId : userId
+                , targetUserId : targetUserId
+            });
+
+            $.ajax({
+                url: "/subscribe",
+                type: "POST",
+                dataType: 'json',
+                contentType: 'application/json; charset=utf-8',
+                data : json,
+                success: function (data, status, xhr) {
+                    if(data.code === "201"){
+                        alert('구독 성공');
+                        console.log(data);
+
+                        $("#subButton").addClass("d-none");
+                        $("#unSubButton").addClass("d-none");
+
+                        $("#unSubButton").removeClass("d-none");
+
+                    }else{
+                        alert('구독 실패');
+                        console.log(data);
+                    }
+                },
+                error: function (data, status, xhr) {
+                    alert(data.responseJSON.message);
+                },
+            });
+        }
+
         /*<![CDATA[*/
 
         function modify(postId){
