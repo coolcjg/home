@@ -53,6 +53,9 @@ public class PostService {
     @Value("${topic.name}")
     private String topicName;
 
+    @Value("${home.domain}")
+    private String homeDomain;
+
     public PostListResponseDto list(PostListRequestDto dto){
         Pageable pageable = PageRequest.of(dto.getPageNumber()-1, dto.getPageSize(), Sort.Direction.DESC, "regDate");
         Page<Post> page =  postRepository.list(pageable, dto);
@@ -140,7 +143,12 @@ public class PostService {
                 .modDate(dateToString.apply(result.getModDate()))
                 .build();
 
-        kafkaProducer.create(topicName, new Gson().toJson(response));
+        KafkaAlarmDto kafkaAlarmDto = KafkaAlarmDto.builder()
+                .userId(result.getUser().getUserId())
+                .message(result.getUser().getUserId() + "님이 새로운 글을 등록했습니다")
+                .link(homeDomain +"/post/" + result.getPostId()).build();
+
+        kafkaProducer.create(topicName, new Gson().toJson(kafkaAlarmDto));
 
         return response;
     }
