@@ -1,5 +1,6 @@
 package com.cjg.home.service;
 
+import com.cjg.home.code.ResultCode;
 import com.cjg.home.domain.Alarm;
 import com.cjg.home.domain.Subscribe;
 import com.cjg.home.dto.request.AlarmDeleteRequestDto;
@@ -7,6 +8,7 @@ import com.cjg.home.dto.request.AlarmListRequestDto;
 import com.cjg.home.dto.request.AlarmSaveRequestDto;
 import com.cjg.home.dto.response.AlarmListResponseDto;
 import com.cjg.home.dto.response.AlarmResponseDto;
+import com.cjg.home.exception.CustomException;
 import com.cjg.home.repository.AlarmRepository;
 import com.cjg.home.repository.SubscribeRepository;
 import com.cjg.home.util.DateToString;
@@ -73,7 +75,8 @@ public class AlarmService {
     }
 
     public void delete(AlarmDeleteRequestDto dto){
-        alarmRepository.deleteById(dto.getAlarmId());
-
+        Alarm alarm = alarmRepository.findById(dto.getAlarmId()).orElseThrow(() -> new CustomException(ResultCode.ALARM_NOT_FOUND));
+        alarm.setDelYn("Y");
+        alarmRepository.save(alarm);
     }
 }

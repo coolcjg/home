@@ -73,7 +73,8 @@ public enum ResultCode {
     SUBSCRIBE_DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "구독 취소 실패"),
 
     ALARM_LIST_SUCCESS(HttpStatus.OK, "알람 리스트 성공"),
-    ALARM_DELETE_SUCCESS(HttpStatus.OK, "알람 삭제 성공");
+    ALARM_DELETE_SUCCESS(HttpStatus.OK, "알람 삭제 성공"),
+    ALARM_NOT_FOUND(HttpStatus.NOT_FOUND, "알람 조회 실패");
 
 
     private final HttpStatus httpStatus;

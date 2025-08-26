@@ -170,22 +170,27 @@
                   html += '<div>'
                   html += '<span>게시글</span>';
                   html += '<span>' + list[i].regDate + '</span>';
-                  html += '<button type="button" class="btn btn-danger btn-sm">삭제</button>';
+                  html += '<button type="button" class="btn btn-danger btn-sm" onclick="deleteAlarm('+list[i].alarmId+')">삭제</button>';
                   html += '</div>';
                   html += '<div>';
                   html += list[i].message;
                   html += '</div>';
                   html += '</div>';
               }
+
+              clearAlarm();
+              $("#alarmDiv").html(html);
           }else {
-              html += '<div class="alarmElement">';
-              html += '알람 내용이 없습니다.';
-              html += '</div>';
+              clearAlarm();
+              appendEmptyDiv();
           }
+      }
 
-          console.log(html);
-
-          clearAlarm();
+      function appendEmptyDiv(){
+          html = '';
+          html += '<div class="alarmElement">';
+          html += '알람 내용이 없습니다.';
+          html += '</div>';
           $("#alarmDiv").html(html);
       }
 
@@ -207,8 +212,8 @@
                           alert('알람 삭제 성공')
                           console.log(data);
 
-                          $("#alarm-" + alarmId).delete();
-
+                          $("#alarm-" + alarmId).remove();
+                          checkEmpty();
                       }else{
                           alert('알람 삭제 실패');
                       }
@@ -222,11 +227,11 @@
 
       }
 
-
-
-
-
-
+      function checkEmpty(){
+          if($("#alarmDiv").html() === ''){
+              appendEmptyDiv();
+          }
+      }
 
     </script>
 
