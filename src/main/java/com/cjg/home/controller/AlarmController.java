@@ -11,10 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -24,8 +21,16 @@ public class AlarmController {
 
     @GetMapping(value = "/alarm")
     public ResponseEntity<Response<AlarmListResponseDto>> list(
-            @AuthenticationPrincipal CustomUserDetails customUserDetails,
-            @RequestBody @Valid AlarmListRequestDto dto){
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
+            ,@RequestParam(required = true) String userId
+            ,@RequestParam(required = false, defaultValue = "1") Integer pageNumber
+            ,@RequestParam(required = false, defaultValue = "10") Integer pageSize){
+
+        AlarmListRequestDto dto = AlarmListRequestDto.builder()
+                .userId(userId)
+                .pageNumber(pageNumber)
+                .pageSize(pageSize).build();
+
         return ResponseEntity.ok(Response.success(ResultCode.ALARM_LIST_SUCCESS, alarmService.list(dto)));
     }
 

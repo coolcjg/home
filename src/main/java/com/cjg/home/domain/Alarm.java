@@ -39,6 +39,10 @@ public class Alarm {
     @ColumnDefault("'N'")
     private String checked;
 
+    @Column(length = 1)
+    @ColumnDefault("'N'")
+    private String delYn;
+
     @CreationTimestamp
     @JsonFormat(pattern="yyyy-MM-dd HH:mm")
     private LocalDateTime regDate;

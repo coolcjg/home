@@ -46,46 +46,33 @@
             <div class="me-3">
               <button class="btn btn-success" type="button" th:onclick="|location.href='@{/user/view}'|">회원정보</button>
 
-              <div id="alarmDiv" style="position:absolute; top:70px; right:10px; z-index:100; border:1px solid black; width:500px; background:white">
-                  <div id="alarm-1">
-                      <div style="border:1px solid blue; margin:10px;">
-                          <div style="cursor:pointer">
-                              <div>
-                                  <span>포스트</span>
-                                  <span>2025.08.26</span>
-                                  <button type="button" class="btn btn-danger btn-sm">삭제</button>
-                              </div>
-                              <div>
-                                  내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.
-                              </div>
-                          </div>
+              <div id="alarmDiv" class="alarmDiv">
+                  <div id="alarm-1" class="alarmElement">
+                      <div>
+                          <span>포스트</span>
+                          <span>2025.08.26</span>
+                          <button type="button" class="btn btn-danger btn-sm">삭제</button>
                       </div>
-
+                      <div>
+                          내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.
+                      </div>
                   </div>
 
-                  <div id="alarm-2">
-                      <div style="border:1px solid blue; margin:10px;">
-                          <div style="cursor:pointer">
-                              <div>
-                                  <span>포스트</span>
-                                  <span>2025.08.26</span>
-                                  <button type="button" class="btn btn-danger btn-sm">삭제</button>
-                              </div>
-                              <div>
-                                  내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.
-                              </div>
-                          </div>
+                  <div id="alarm-2" class="alarmElement">
+                      <div>
+                          <span>포스트</span>
+                          <span>2025.08.26</span>
+                          <button type="button" class="btn btn-danger btn-sm">삭제</button>
                       </div>
-
+                      <div>
+                          내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.내용입니다.
+                      </div>
                   </div>
 
-                  <!--
-                  <div>
-                      <div style="border:1px solid blue; margin:10px;">
+                  <div class="alarmElement">
                       알람 내용이 없습니다.
-                      </div>
                   </div>
-                  -->
+
               </div>
 
             </div>
@@ -147,22 +134,22 @@
 
       function displayAlarm(){
 
-          const json = JSON.stringify({
+          const param = {
               page : pageNumber
               , pageSize : pageSize
               , userId : /*[[${#authentication.name}]]*/""
-          });
+          }
 
           $.ajax({
               url: "/alarm",
               type: "GET",
               dataType: 'json',
               contentType: 'application/json; charset=utf-8',
-              data : json,
+              data : param,
               success: function (data, status, xhr) {
                   if(data.code === "200"){
-                      alert('알람 리스트 성공')
                       console.log(data);
+                      htmlAlarmList(data.data.list);
                   }else{
                       alert('알람 리스트 실패');
                   }
@@ -174,19 +161,47 @@
 
       }
 
-      function deleteAlarm(alarmId){
+      function htmlAlarmList(list) {
+          let html='';
+
+          if(list.length > 0){
+              for(let i=0; i< list.length; i++){
+                  html += '<div id="alarm-' + list[i].alarmId + '" class="alarmElement">';
+                  html += '<div>'
+                  html += '<span>게시글</span>';
+                  html += '<span>' + list[i].regDate + '</span>';
+                  html += '<button type="button" class="btn btn-danger btn-sm">삭제</button>';
+                  html += '</div>';
+                  html += '<div>';
+                  html += list[i].message;
+                  html += '</div>';
+                  html += '</div>';
+              }
+          }else {
+              html += '<div class="alarmElement">';
+              html += '알람 내용이 없습니다.';
+              html += '</div>';
+          }
+
+          console.log(html);
+
+          clearAlarm();
+          $("#alarmDiv").html(html);
+      }
+
+      function deleteAlarm(alarmId) {
           const json = JSON.stringify({
-              userId : /*[[${#authentication.name}]]*/""
-              , alarmId : alarmId
+              userId: /*[[${#authentication.name}]]*/""
+              , alarmId: alarmId
           });
 
-          if(confirm('삭제하시겠습니까?')){
+          if (confirm('삭제하시겠습니까?')) {
               $.ajax({
                   url: "/alarm",
                   type: "DELETE",
                   dataType: 'json',
                   contentType: 'application/json; charset=utf-8',
-                  data : json,
+                  data: json,
                   success: function (data, status, xhr) {
                       if(data.code === "200"){
                           alert('알람 삭제 성공')

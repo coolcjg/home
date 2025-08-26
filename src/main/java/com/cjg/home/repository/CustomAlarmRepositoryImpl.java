@@ -29,6 +29,7 @@ public class CustomAlarmRepositoryImpl implements CustomAlarmRepository {
                 .selectFrom(alarm)
                 .where(
                     eqUserId(dto.getUserId())
+                    ,alarm.delYn.eq("N")
                 );
 
         JPAQuery<Long> countQuery = jpaQueryFactory
@@ -36,6 +37,7 @@ public class CustomAlarmRepositoryImpl implements CustomAlarmRepository {
                 .from(alarm)
                 .where(
                         eqUserId(dto.getUserId())
+                        ,alarm.delYn.eq("N")
                 );
 
         List<Alarm> list = query.orderBy(alarm.regDate.desc())

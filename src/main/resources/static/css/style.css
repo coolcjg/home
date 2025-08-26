@@ -41,3 +41,19 @@ nav.flex-end{
 .mouse-over{
     cursor: pointer;
 }
+
+.alarmDiv{
+    position:absolute;
+    top:70px;
+    right:10px;
+    z-index:100;
+    border:1px solid black;
+    width:500px;
+    background:white;
+}
+
+.alarmElement{
+    border:1px solid blue;
+    margin:10px;
+    cursor:pointer
+}
