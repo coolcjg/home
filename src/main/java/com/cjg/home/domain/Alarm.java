@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 @ToString
+@Table(name="home_alarm")
 @DynamicInsert //checked컬럼 값이 설정이 안되었을 경우 default값으로 설정한다. nullable = false가 있으면 이 어노테이션이 무시된다.
 public class Alarm {
 
