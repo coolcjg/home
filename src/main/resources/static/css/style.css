@@ -50,6 +50,8 @@ nav.flex-end{
     border:1px solid black;
     width:500px;
     background:white;
+    height: 800px;
+    overflow-y: auto;
 }
 
 .alarmElement{

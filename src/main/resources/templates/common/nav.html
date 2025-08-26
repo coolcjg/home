@@ -47,6 +47,7 @@
               <button class="btn btn-success" type="button" th:onclick="|location.href='@{/user/view}'|">회원정보</button>
 
               <div id="alarmDiv" class="alarmDiv">
+                  <!--
                   <div id="alarm-1" class="alarmElement">
                       <div>
                           <span>포스트</span>
@@ -71,6 +72,13 @@
 
                   <div class="alarmElement">
                       알람 내용이 없습니다.
+                  </div>
+                  -->
+
+                  <div id="nextAlarmDiv" class="text-center">
+                      <button class="btn btn-danger" th:onclick="nextAlarmPage()">
+                          더보기
+                      </button>
                   </div>
 
               </div>
@@ -130,9 +138,17 @@
       let pageNumber=1;
       let pageSize=10;
 
-      displayAlarm();
+      let totalPage=1;
+      let totalCount=0;
 
-      function displayAlarm(){
+      displayAlarm(pageNumber, pageSize);
+
+      function nextAlarmPage(){
+          pageNumber++;
+          displayAlarm(pageNumber, pageSize);
+      }
+
+      function displayAlarm(pageNumber, pageSize){
 
           const param = {
               page : pageNumber
@@ -149,6 +165,10 @@
               success: function (data, status, xhr) {
                   if(data.code === "200"){
                       console.log(data);
+
+                      totalPage = data.data.totalPage;
+                      totalCount = data.data.totalCount;
+
                       htmlAlarmList(data.data.list);
                   }else{
                       alert('알람 리스트 실패');
@@ -178,10 +198,16 @@
                   html += '</div>';
               }
 
-              clearAlarm();
-              $("#alarmDiv").html(html);
+              // 마지막 div 요소 찾기
+              $("#alarmDiv div").last().before(html);
+
+              if(pageNumber < totalPage){
+                  $("#nextAlarmDiv").show();
+              }else{
+                  $("#nextAlarmDiv").hide();
+              }
+
           }else {
-              clearAlarm();
               appendEmptyDiv();
           }
       }
