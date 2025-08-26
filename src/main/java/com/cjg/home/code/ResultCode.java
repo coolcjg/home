@@ -70,7 +70,11 @@ public enum ResultCode {
     SUBSCRIBE_SAVE_SUCCESS(HttpStatus.CREATED, "구독 저장 성공"),
     SUBSCRIBE_SAVE_FAIL_DUPLICATED(HttpStatus.BAD_REQUEST, "구독 저장 실패(중복 구독)"),
     SUBSCRIBE_DELETE_SUCCESS(HttpStatus.OK, "구독 취소 성공"),
-    SUBSCRIBE_DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "구독 취소 실패");
+    SUBSCRIBE_DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "구독 취소 실패"),
+
+    ALARM_LIST_SUCCESS(HttpStatus.OK, "알람 리스트 성공"),
+    ALARM_DELETE_SUCCESS(HttpStatus.OK, "알람 삭제 성공");
+
 
     private final HttpStatus httpStatus;
     private final String message;

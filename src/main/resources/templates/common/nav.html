@@ -40,14 +40,14 @@
             </div>
 
             <div class="me-3">
-              <button type="button" class="btn btn-primary">알림 <span class="badge bg-light text-dark">3</span></button>
+              <button type="button" class="btn btn-primary" th:onclick="toggleAlarmDiv()">알림 <span class="badge bg-light text-dark">3</span></button>
             </div>
 
             <div class="me-3">
               <button class="btn btn-success" type="button" th:onclick="|location.href='@{/user/view}'|">회원정보</button>
 
-              <div style="position:absolute; top:70px; right:10px; z-index:100; border:1px solid black; width:500px; background:white">
-                  <div>
+              <div id="alarmDiv" style="position:absolute; top:70px; right:10px; z-index:100; border:1px solid black; width:500px; background:white">
+                  <div id="alarm-1">
                       <div style="border:1px solid blue; margin:10px;">
                           <div style="cursor:pointer">
                               <div>
@@ -63,7 +63,7 @@
 
                   </div>
 
-                  <div>
+                  <div id="alarm-2">
                       <div style="border:1px solid blue; margin:10px;">
                           <div style="cursor:pointer">
                               <div>
@@ -79,6 +79,13 @@
 
                   </div>
 
+                  <!--
+                  <div>
+                      <div style="border:1px solid blue; margin:10px;">
+                      알람 내용이 없습니다.
+                      </div>
+                  </div>
+                  -->
               </div>
 
             </div>
@@ -94,7 +101,8 @@
 
     <th:block th:replace="~{common/bottom}"></th:block>
 
-    <script>
+    <script th:inline="javascript">
+
       function logout(){
         if(confirm('로그아웃하시겠습니까?')){
           $.ajax({
@@ -113,6 +121,97 @@
           });
         }
       }
+
+      function toggleAlarmDiv(){
+          const alarmDiv = $("#alarmDiv").css('display');
+
+          if(alarmDiv === 'block'){
+              console.log("1");
+              $("#alarmDiv").css('display', "none");
+          }else{
+              console.log("2");
+              $("#alarmDiv").css('display', 'block');
+          }
+
+      }
+
+      function clearAlarm(){
+          const alarmDiv = $("#alarmDiv");
+          alarmDiv.empty();
+      }
+
+      let pageNumber=1;
+      let pageSize=10;
+
+      displayAlarm();
+
+      function displayAlarm(){
+
+          const json = JSON.stringify({
+              page : pageNumber
+              , pageSize : pageSize
+              , userId : /*[[${#authentication.name}]]*/""
+          });
+
+          $.ajax({
+              url: "/alarm",
+              type: "GET",
+              dataType: 'json',
+              contentType: 'application/json; charset=utf-8',
+              data : json,
+              success: function (data, status, xhr) {
+                  if(data.code === "200"){
+                      alert('알람 리스트 성공')
+                      console.log(data);
+                  }else{
+                      alert('알람 리스트 실패');
+                  }
+              },
+              error: function (data, status, xhr) {
+                  alert(data.responseJSON.message);
+              },
+          });
+
+      }
+
+      function deleteAlarm(alarmId){
+          const json = JSON.stringify({
+              userId : /*[[${#authentication.name}]]*/""
+              , alarmId : alarmId
+          });
+
+          if(confirm('삭제하시겠습니까?')){
+              $.ajax({
+                  url: "/alarm",
+                  type: "DELETE",
+                  dataType: 'json',
+                  contentType: 'application/json; charset=utf-8',
+                  data : json,
+                  success: function (data, status, xhr) {
+                      if(data.code === "200"){
+                          alert('알람 삭제 성공')
+                          console.log(data);
+
+                          $("#alarm-" + alarmId).delete();
+
+                      }else{
+                          alert('알람 삭제 실패');
+                      }
+                  },
+                  error: function (data, status, xhr) {
+                      alert(data.responseJSON.message);
+                  },
+              });
+          }
+
+
+      }
+
+
+
+
+
+
 
     </script>
 
