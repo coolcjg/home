@@ -13,7 +13,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void  addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/storage/**") // --1
+        registry.addResourceHandler("/tmp/**") // --1
                 .addResourceLocations(resourceLocation); //--2
     }
 
