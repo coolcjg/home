@@ -40,7 +40,7 @@
             </div>
 
             <div class="me-3">
-              <button type="button" class="btn btn-primary" th:onclick="toggleAlarmDiv()">알림 <span class="badge bg-light text-dark">3</span></button>
+              <button type="button" class="btn btn-primary" th:onclick="toggleAlarmDiv()">알림 <span id="alarmCount" class="badge bg-light text-dark"></span></button>
             </div>
 
             <div class="me-3">
@@ -98,6 +98,46 @@
 
     <script th:inline="javascript">
 
+        $("#alarmDiv").on("click", ".alarmElement", function(e) {
+            if ($(e.target).is("button")) return;
+
+            const link = e.target.closest(".alarmElement").dataset.link;
+
+            checkAlarm(e.target.closest(".alarmElement").dataset.id);
+
+            if(confirm("이동하시겠습니까?")){
+                location.href=link;
+            }
+
+        });
+
+      function checkAlarm(id){
+
+          const json = JSON.stringify({
+              userId : /*[[${#authentication.name}]]*/""
+              , alarmId : id
+          });
+
+          $.ajax({
+              url: "/alarm/check",
+              type: "PUT",
+              dataType: 'json',
+              contentType: 'application/json; charset=utf-8',
+              data : json,
+              success: function (data, status, xhr) {
+                  if(data.code === "200"){
+                      $("#alarm-"+id).addClass("visited");
+                  }else{
+                      alert('알람 체크 실패');
+                  }
+              },
+              error: function (data, status, xhr) {
+                  alert(data.responseJSON.message);
+              },
+          });
+
+      }
+
       function logout(){
         if(confirm('로그아웃하시겠습니까?')){
           $.ajax({
@@ -141,7 +181,42 @@
       let totalPage=1;
       let totalCount=0;
 
+      uncheckedAlarmCount();
       displayAlarm(pageNumber, pageSize);
+
+      function uncheckedAlarmCount(){
+
+          const userId = /*[[${#authentication.name}]]*/"";
+
+          if(userId === 'anonymousUser'){
+              return;
+          }
+
+          const param = {
+              userId : userId
+              , checked : 'N'
+          }
+
+          $.ajax({
+              url: "/alarm/count",
+              type: "GET",
+              dataType: 'json',
+              contentType: 'application/json; charset=utf-8',
+              data : param,
+              success: function (data, status, xhr) {
+                  if(data.code === "200"){
+                      $("#alarmCount").text(data.data.count);
+                      console.log(data);
+                  }else{
+                      alert('안읽은 알람 카운트 실패');
+                  }
+              },
+              error: function (data, status, xhr) {
+                  alert(data.responseJSON.message);
+              },
+          });
+
+      }
 
       function nextAlarmPage(){
           pageNumber++;
@@ -150,10 +225,16 @@
 
       function displayAlarm(pageNumber, pageSize){
 
+          const userId = /*[[${#authentication.name}]]*/"";
+
+          if(userId === 'anonymousUser'){
+              return;
+          }
+
           const param = {
               page : pageNumber
               , pageSize : pageSize
-              , userId : /*[[${#authentication.name}]]*/""
+              , userId : userId
           }
 
           $.ajax({
@@ -186,7 +267,10 @@
 
           if(list.length > 0){
               for(let i=0; i< list.length; i++){
-                  html += '<div id="alarm-' + list[i].alarmId + '" class="alarmElement">';
+
+                  const classText = list[i].checked === "Y" ? "alarmElement visited" : "alarmElement";
+
+                  html += '<div id="alarm-' + list[i].alarmId + '" class="'+classText+'" data-link="'+list[i].link + '"" data-id="'+list[i].alarmId+'">';
                   html += '<div>'
                   html += '<span>게시글</span>';
                   html += '<span>' + list[i].regDate + '</span>';

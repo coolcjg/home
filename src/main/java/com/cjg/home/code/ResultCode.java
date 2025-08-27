@@ -74,7 +74,12 @@ public enum ResultCode {
 
     ALARM_LIST_SUCCESS(HttpStatus.OK, "알람 리스트 성공"),
     ALARM_DELETE_SUCCESS(HttpStatus.OK, "알람 삭제 성공"),
-    ALARM_NOT_FOUND(HttpStatus.NOT_FOUND, "알람 조회 실패");
+    ALARM_NOT_FOUND(HttpStatus.NOT_FOUND, "알람 조회 실패"),
+
+    ALARM_COUNT_SUCCESS(HttpStatus.OK, "알람 카운트 성공"),
+    ALARM_CHECK_SUCCESS(HttpStatus.OK, "알람 체크 성공");
+
+
 
 
     private final HttpStatus httpStatus;

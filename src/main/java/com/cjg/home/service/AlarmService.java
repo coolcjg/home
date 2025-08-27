@@ -3,9 +3,8 @@ package com.cjg.home.service;
 import com.cjg.home.code.ResultCode;
 import com.cjg.home.domain.Alarm;
 import com.cjg.home.domain.Subscribe;
-import com.cjg.home.dto.request.AlarmDeleteRequestDto;
-import com.cjg.home.dto.request.AlarmListRequestDto;
-import com.cjg.home.dto.request.AlarmSaveRequestDto;
+import com.cjg.home.dto.request.*;
+import com.cjg.home.dto.response.AlarmCountResponseDto;
 import com.cjg.home.dto.response.AlarmListResponseDto;
 import com.cjg.home.dto.response.AlarmResponseDto;
 import com.cjg.home.exception.CustomException;
@@ -72,6 +71,18 @@ public class AlarmService {
                 .totalPage(totalPage)
                 .totalCount(page.getTotalElements())
                 .build();
+    }
+
+    public AlarmCountResponseDto count(AlarmCountRequestDto dto){
+        return AlarmCountResponseDto.builder()
+                .count(alarmRepository.count(dto))
+                .build();
+    }
+
+    public void check(AlarmCheckRequestDto dto){
+        Alarm alarm = alarmRepository.findById(dto.getAlarmId()).orElseThrow(()-> new CustomException(ResultCode.ALARM_NOT_FOUND));
+        alarm.setChecked("Y");
+        alarmRepository.save(alarm);
     }
 
     public void delete(AlarmDeleteRequestDto dto){

@@ -59,3 +59,7 @@ nav.flex-end{
     margin:10px;
     cursor:pointer
 }
+
+.visited{
+    color: rgba(0, 0, 0, 0.2);
+}

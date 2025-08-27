@@ -1,6 +1,7 @@
 package com.cjg.home.repository;
 
 import com.cjg.home.domain.Alarm;
+import com.cjg.home.dto.request.AlarmCountRequestDto;
 import com.cjg.home.dto.request.AlarmListRequestDto;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -49,8 +50,28 @@ public class CustomAlarmRepositoryImpl implements CustomAlarmRepository {
 
     }
 
+    @Override
+    public Long count(AlarmCountRequestDto dto) {
+
+        JPAQuery<Long> countQuery = jpaQueryFactory
+                .select(alarm.count())
+                .from(alarm)
+                .where(
+                        eqUserId(dto.getUserId())
+                        ,eqChecked(dto.getChecked())
+                        ,alarm.delYn.eq("N")
+                );
+
+        return countQuery.fetchOne();
+    }
+
     private BooleanExpression eqUserId(String userId){
         if(!StringUtils.hasText(userId)) return null;
         return alarm.user.userId.eq(userId);
+    }
+
+    private BooleanExpression eqChecked(String checked){
+        if(!StringUtils.hasText(checked)) return null;
+        return alarm.checked.eq(checked);
     }
 }
