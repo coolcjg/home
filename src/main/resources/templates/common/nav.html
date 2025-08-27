@@ -323,6 +323,7 @@
                           console.log(data);
 
                           $("#alarm-" + alarmId).remove();
+                          uncheckedAlarmCount();
                           checkEmpty();
                       }else{
                           alert('알람 삭제 실패');
