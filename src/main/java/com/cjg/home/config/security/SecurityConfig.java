@@ -40,6 +40,7 @@ public class SecurityConfig {
                                 .requestMatchers("/css/**", "/js/**", "/*.ico", "/storage/**", "/tmp/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/user/login", "/user/signup").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/actuator/prometheus").permitAll()
 
                                 .requestMatchers(HttpMethod.GET, "/post/list").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/post/*").permitAll()
