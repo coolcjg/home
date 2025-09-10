@@ -1,5 +1,6 @@
 package com.cjg.home.service;
 
+import com.cjg.home.domain.CustomUserDetails;
 import com.cjg.home.dto.request.MovieListRequestDto;
 import com.cjg.home.dto.response.MovieListResponseDto;
 import com.cjg.home.dto.response.MovieResponseDto;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -59,8 +61,8 @@ public class MovieService {
 
             response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            System.out.println("Status Code: " + response.statusCode());
-            System.out.println("Body: " + response.body());
+            log.info("Status Code: " + response.statusCode());
+            log.info("Body: " + response.body());
 
         }catch(URISyntaxException | InterruptedException | IOException e){
             log.error(e.getMessage());
@@ -81,7 +83,7 @@ public class MovieService {
             String movieCd = jo.get("movieCd").getAsString();
             String movieNm = jo.get("movieNm").getAsString();
 
-            String prdtYear = jo.get("prdtYear").getAsString();
+            int prdtYear = jo.get("prdtYear").getAsInt();
             String openDt = jo.get("openDt").getAsString();
 
             String repNationNm = jo.get("repNationNm").getAsString();
@@ -123,65 +125,88 @@ public class MovieService {
                 .build();
     }
 
-    public String getQueryParams(MovieListRequestDto dto, int pageNumber){
+    public MovieResponseDto view(CustomUserDetails customUserDetails, String movieCd){
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("/movie/list?");
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("key",  movieApiKey);
+        params.add("movieCd",  movieCd);
 
-//        if(dto.getSearchType() != null){
-//            sb.append("searchType=").append(dto.getSearchType()).append("&");
-//        }
-//
-//        if(dto.getSearchText() != null){
-//            sb.append("searchText=").append(dto.getSearchText()).append("&");
-//        }
+        // URI 생성
+        String uri = UriComponentsBuilder.fromUriString("http://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieInfo.json")
+                .queryParams(params)
+                .toUriString();
 
-        sb.append("curPage=").append(pageNumber).append("&");
-        sb.append("itemPerPage=").append(dto.getItemPerPage()).append("&");
+        log.info("URI : " + uri);
 
-        if(sb.lastIndexOf("&") == sb.length()-1){
-            sb.delete(sb.length()-1, sb.length());
+        HttpResponse<String> response = null;
+
+        try{
+            HttpClient client = HttpClient.newHttpClient();
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(new URI(uri))
+                    .GET()
+                    .build();
+
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            log.info("Status Code: " + response.statusCode());
+            log.info("Body: " + response.body());
+
+        }catch(URISyntaxException | InterruptedException | IOException e){
+            log.error(e.getMessage());
         }
 
-        return sb.toString();
+        JsonObject obj = JsonParser.parseString(response.body()).getAsJsonObject();
 
-    };
+        JsonObject movieInfo = obj.get("movieInfoResult").getAsJsonObject().get("movieInfo").getAsJsonObject();
 
+        String movieNm = movieInfo.get("movieNm").getAsString();
+        int showTm = movieInfo.get("showTm").getAsInt();
+        int prdtYear = movieInfo.get("prdtYear").getAsInt();
+        String openDt = movieInfo.get("openDt").getAsString();
+        String prdtStatNm = movieInfo.get("prdtStatNm").getAsString();
+        String typeNm = movieInfo.get("typeNm").getAsString();
 
-//    public PostResponseDto view(CustomUserDetails customUserDetails, Long postId){
-//        Post post = postRepository.findById(postId).orElseThrow(()-> new CustomViewException(ResultCode.POST_SEARCH_NOT_FOUND));
-//        if(post.getOpen() == 'Y'){
-//            post.setViewCnt(post.getViewCnt()+1);
-//            return postToDto(post);
-//        }else{
-//            if(customUserDetails == null){
-//                throw new CustomViewException(ResultCode.POST_INVALID_AUTH);
-//            }else{
-//                if(auth.isSameUserForUser(customUserDetails, post.getUser().getUserId())){
-//                    post.setViewCnt(post.getViewCnt()+1);
-//                    return postToDto(post);
-//                }else{
-//                    throw new CustomViewException(ResultCode.POST_INVALID_AUTH);
-//                }
-//            }
-//        }
-//    }
+        List<String> nations = new ArrayList<>();
 
-//    public PostResponseDto postToDto(Post post){
-//        return PostResponseDto.builder()
-//                .postId(post.getPostId())
-//                .userId(post.getUser().getUserId())
-//                .name(aes256.decrypt(post.getUser().getName()))
-//                .image(imageUrlPrefix + post.getUser().getImage())
-//                .title(post.getTitle())
-//                .content(post.getContent())
-//                .open(post.getOpen())
-//                .viewCnt(post.getViewCnt())
-//                .commentResponseDtoList(commentListToDto(commentRepository.recursiveList(post.getPostId())))
-//                .regDate(dateToString.apply(post.getRegDate()))
-//                .modDate(dateToString.apply(post.getModDate()))
-//                .build();
-//    }
+        for(JsonElement e : movieInfo.get("nations").getAsJsonArray()){
+            nations.add(e.getAsJsonObject().get("nationNm").getAsString());
+        }
 
+        List<String> genres = new ArrayList<>();
+
+        for(JsonElement e : movieInfo.get("genres").getAsJsonArray()){
+            genres.add(e.getAsJsonObject().get("genreNm").getAsString());
+        }
+
+        List<String> directors = new ArrayList<>();
+
+        for(JsonElement e : movieInfo.get("directors").getAsJsonArray()){
+            directors.add(e.getAsJsonObject().get("peopleNm").getAsString());
+        }
+
+        List<String> actors = new ArrayList<>();
+
+        for(JsonElement e : movieInfo.get("actors").getAsJsonArray()){
+            actors.add(e.getAsJsonObject().get("peopleNm").getAsString());
+        }
+
+        MovieResponseDto dto = MovieResponseDto.builder()
+                .movieCd(movieCd)
+                .movieNm(movieNm)
+                .showTm(showTm)
+                .prdtYear(prdtYear)
+                .openDt(openDt)
+                .prdtStatNm(prdtStatNm)
+                .typeNm(typeNm)
+                .nations(nations)
+                .genres(genres)
+                .directors(directors)
+                .actors(actors)
+                .build();
+
+        return dto;
+    }
 }
 

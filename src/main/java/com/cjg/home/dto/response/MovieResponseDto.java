@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Builder
@@ -13,9 +15,17 @@ import lombok.ToString;
 public class MovieResponseDto {
     private String movieCd;
     private String movieNm;
-    private String prdtYear;
+    private int showTm;
+    private int prdtYear;
     private String openDt;
+    private String prdtStatNm;
+    private String typeNm;
     private String repNationNm;
     private String repGenreNm;
     private String repDirector;
+
+    List<String> nations;
+    List<String> genres;
+    List<String> directors;
+    List<String> actors;
 }

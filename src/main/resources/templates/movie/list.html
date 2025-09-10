@@ -24,7 +24,7 @@
             </thead>
             <tbody>
             <tr th:each="obj : ${data.list}">
-                <th class="mouse-over" scope="row" th:text="${obj.movieNm}"></th>
+                <th class="mouse-over" scope="row" th:text="${obj.movieNm}" th:onclick="view([[${obj.movieCd}]])"></th>
                 <td th:text="${obj.repDirector}"></td>
                 <td th:text="${obj.openDt}"></td>
                 <td th:text="${obj.repGenreNm}"></td>

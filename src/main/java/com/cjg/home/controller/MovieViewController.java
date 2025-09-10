@@ -10,6 +10,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
@@ -46,10 +47,10 @@ public class MovieViewController {
         return "movie/list";
     }
 
-//    @GetMapping(value = "/movie/{movieCd}")
-//    public String view(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable String movieCd, Model model){
-//        model.addAttribute("data", movieService.view(customUserDetails, movieCd));
-//        return "movie/view";
-//    }
+    @GetMapping(value = "/movie/{movieCd}")
+    public String view(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable String movieCd, Model model){
+        model.addAttribute("data", movieService.view(customUserDetails, movieCd));
+        return "movie/view";
+    }
 
 }
