@@ -65,8 +65,7 @@ public class MovieService {
             log.info("Body: " + response.body());
 
         }catch(URISyntaxException | InterruptedException | IOException e){
-            log.error(e.getMessage());
-
+            log.error(e.getCause());
             return MovieListResponseDto.builder()
                     .code("error")
                     .build();
