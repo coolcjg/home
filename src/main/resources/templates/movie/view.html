@@ -12,24 +12,72 @@
     <th:block th:replace="~{common/nav}"></th:block>
 
     <div class="d-flex justify-content-center">
-        <div class="mx-5 w-500">
+        <div class="mx-5 w-500 text-center">
 
-            <div>
-                <div>
-                    <h1 th:text="${data.movieNm}"></h1>
-                </div>
-                    코드 : <div class="mx-3" th:text="${data.movieCd}"></div>
-                    제목<div class="mx-3" th:text="${data.movieNm}"></div>
-                    상영시간<div class="mx-3" th:text="${data.showTm}"></div>
-                    제작일<div class="mx-3" th:text="${data.prdtYear}"></div>
-                    개봉일<div class="mx-3" th:text="${data.openDt}"></div>
-                    상태<div class="mx-3" th:text="${data.prdtStatNm}"></div>
-                    종류<div class="mx-3" th:text="${data.typeNm}"></div>
-                    국가<div class="mx-3" th:text="${#strings.listJoin(data.nations, ',')}"></div>
-                    장르<div class="mx-3" th:text="${#strings.listJoin(data.genres, ',')}"></div>
-                    감독<div class="mx-3" th:text="${#strings.listJoin(data.directors, ',')}"></div>
-                    배우<div class="mx-3" th:text="${#strings.listJoin(data.actors, ',')}"></div>
-            </div>
+            <th:block th:switch="${data.code}">
+                <th:block th:case="'error'">
+                    <div>API 에러</div>
+                </th:block>
+
+                <th:block th:case="*">
+                    <table class="table">
+                        <colgroup>
+                            <col style="width: 20%">
+                            <col style="width: 80%">
+                        </colgroup>
+                        <tbody>
+                        <tr>
+                            <th scope="row">제목</th>
+                            <td th:text="${data.movieNm}"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">코드</th>
+                            <td th:text="${data.movieCd}"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">제목</th>
+                            <td th:text="${data.movieNm}"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">상영시간</th>
+                            <td th:text="${data.showTm}"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">제작일</th>
+                            <td th:text="${data.prdtYear}"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">개봉일</th>
+                            <td th:text="${data.openDt}"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">상태</th>
+                            <td th:text="${data.prdtStatNm}"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">종류</th>
+                            <td th:text="${data.typeNm}"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">국가</th>
+                            <td th:text="${#strings.listJoin(data.nations, ',')}"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">장르</th>
+                            <td th:text="${#strings.listJoin(data.genres, ',')}"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">감독</th>
+                            <td th:text="${#strings.listJoin(data.directors, ',')}"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">배우</th>
+                            <td th:text="${#strings.listJoin(data.actors, ',')}"></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </th:block>
+            </th:block>
 
             <div class="d-flex justify-content-end">
                 <button class="btn btn-primary ms-1" type="button" th:onclick="list()">리스트</button>

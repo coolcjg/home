@@ -171,59 +171,73 @@ public class MovieService {
             log.info("Body: " + response.body());
 
         }catch(URISyntaxException | InterruptedException | IOException e){
-            log.error(e.getMessage());
-        }
+            log.error("API ERROR");
+            log.error(e.getCause());
 
+            return MovieResponseDto.builder()
+                    .code("error")
+                    .build();
+        }
         JsonObject obj = JsonParser.parseString(response.body()).getAsJsonObject();
 
-        JsonObject movieInfo = obj.get("movieInfoResult").getAsJsonObject().get("movieInfo").getAsJsonObject();
+        if(obj.has("faultInfo")){
+            log.error("API ERROR");
+            log.error(obj);
 
-        String movieNm = movieInfo.get("movieNm").getAsString();
-        int showTm = movieInfo.get("showTm").getAsInt();
-        int prdtYear = movieInfo.get("prdtYear").getAsInt();
-        String openDt = movieInfo.get("openDt").getAsString();
-        String prdtStatNm = movieInfo.get("prdtStatNm").getAsString();
-        String typeNm = movieInfo.get("typeNm").getAsString();
+            return MovieResponseDto.builder()
+                    .code("error")
+                    .build();
+        }else {
 
-        List<String> nations = new ArrayList<>();
+            JsonObject movieInfo = obj.get("movieInfoResult").getAsJsonObject().get("movieInfo").getAsJsonObject();
 
-        for(JsonElement e : movieInfo.get("nations").getAsJsonArray()){
-            nations.add(e.getAsJsonObject().get("nationNm").getAsString());
+            String movieNm = movieInfo.get("movieNm").getAsString();
+            int showTm = movieInfo.get("showTm").getAsInt();
+            int prdtYear = movieInfo.get("prdtYear").getAsInt();
+            String openDt = movieInfo.get("openDt").getAsString();
+            String prdtStatNm = movieInfo.get("prdtStatNm").getAsString();
+            String typeNm = movieInfo.get("typeNm").getAsString();
+
+            List<String> nations = new ArrayList<>();
+
+            for (JsonElement e : movieInfo.get("nations").getAsJsonArray()) {
+                nations.add(e.getAsJsonObject().get("nationNm").getAsString());
+            }
+
+            List<String> genres = new ArrayList<>();
+
+            for (JsonElement e : movieInfo.get("genres").getAsJsonArray()) {
+                genres.add(e.getAsJsonObject().get("genreNm").getAsString());
+            }
+
+            List<String> directors = new ArrayList<>();
+
+            for (JsonElement e : movieInfo.get("directors").getAsJsonArray()) {
+                directors.add(e.getAsJsonObject().get("peopleNm").getAsString());
+            }
+
+            List<String> actors = new ArrayList<>();
+
+            for (JsonElement e : movieInfo.get("actors").getAsJsonArray()) {
+                actors.add(e.getAsJsonObject().get("peopleNm").getAsString());
+            }
+
+            MovieResponseDto dto = MovieResponseDto.builder()
+                    .movieCd(movieCd)
+                    .movieNm(movieNm)
+                    .showTm(showTm)
+                    .prdtYear(prdtYear)
+                    .openDt(openDt)
+                    .prdtStatNm(prdtStatNm)
+                    .typeNm(typeNm)
+                    .nations(nations)
+                    .genres(genres)
+                    .directors(directors)
+                    .actors(actors)
+                    .build();
+
+            return dto;
         }
-
-        List<String> genres = new ArrayList<>();
-
-        for(JsonElement e : movieInfo.get("genres").getAsJsonArray()){
-            genres.add(e.getAsJsonObject().get("genreNm").getAsString());
-        }
-
-        List<String> directors = new ArrayList<>();
-
-        for(JsonElement e : movieInfo.get("directors").getAsJsonArray()){
-            directors.add(e.getAsJsonObject().get("peopleNm").getAsString());
-        }
-
-        List<String> actors = new ArrayList<>();
-
-        for(JsonElement e : movieInfo.get("actors").getAsJsonArray()){
-            actors.add(e.getAsJsonObject().get("peopleNm").getAsString());
-        }
-
-        MovieResponseDto dto = MovieResponseDto.builder()
-                .movieCd(movieCd)
-                .movieNm(movieNm)
-                .showTm(showTm)
-                .prdtYear(prdtYear)
-                .openDt(openDt)
-                .prdtStatNm(prdtStatNm)
-                .typeNm(typeNm)
-                .nations(nations)
-                .genres(genres)
-                .directors(directors)
-                .actors(actors)
-                .build();
-
-        return dto;
     }
 }
 
