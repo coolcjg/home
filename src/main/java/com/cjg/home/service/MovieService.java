@@ -117,6 +117,9 @@ public class MovieService {
                 .curPage(dto.getCurPage())
                 .totPage(totPage)
                 .totCnt(totCnt)
+                .itemPerPage(dto.getItemPerPage())
+                .movieNm(dto.getMovieNm())
+                .directorNm(dto.getDirectorNm())
                 .build();
     }
 

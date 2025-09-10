@@ -64,39 +64,54 @@
         </nav>
     </div>
 
-<!--    <div class="mx-5 post-search-div">-->
-<!--        <div class="input-group mb-3 post-search-inner-div">-->
-<!--            <select class="form-select" aria-label="Default select example" id="searchType">-->
-<!--                <option value="movieNm" th:selected="${data.searchType} == 'movieNm'">제목</option>-->
-<!--                <option value="directors" th:selected="${data.searchType} == 'directors'">감독</option>-->
-<!--                <option value="repGenreNm" th:selected="${data.searchType} == 'repGenreNm'">장르</option>-->
-<!--                <option value="repNationNm" th:selected="${data.searchType} == 'repNationNm'">국가</option>-->
-<!--            </select>-->
-<!--            <input type="text" class="form-control" aria-label="Text input with dropdown button" id="searchText" th:value="${data.searchText}">-->
-<!--            <button class="btn btn-primary" type="button" th:onclick="search()">검색</button>-->
-<!--        </div>-->
+    <form id="paramForm">
+    <div class="mx-5 post-search-div">
+        <div class="input-group mb-3 post-search-inner-div">
 
-<!--    </div>-->
+            <label for="movieNm">제목</label><input type="text" class="form-control" name="movieNm" id="movieNm" th:value="${data.movieNm}">
+            <label for="directorNm">감독</label><input type="text" class="form-control" name="directorNm" id="directorNm" th:value="${data.directorNm}">
+
+            <input type="hidden" name="curPage" id="curPage" th:value="${data.curPage}">
+            <input type="hidden" name="itemPerPage" id="itemPerPage" th:value="${data.itemPerPage}">
+
+            <button class="btn btn-primary" type="button" th:onclick="search()">검색</button>
+        </div>
+    </div>
+    </form>
 
     <th:block th:replace="~{common/bottom}"></th:block>
     <script src="/js/common.js"></script>
 
-    <script>
+    <script th:inline="javascript">
+
+        document.getElementById("paramForm").addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                search(); // 폼 데이터 처리 함수
+            }
+        });
 
         function goList(curPage){
-            location.href = "/movie/list?curPage=" + curPage + "&itemPerPage=" + 10;
+            $("#curPage").val(curPage);
+            search();
         }
 
-
         function search(){
-            const searchType = $("#searchType").val();
-            const searchText = $("#searchText").val().trim();
 
-            if(searchText === ''){
-                location.href = "/movie/list"
-            }else{
-                location.href = "/movie/list?searchType=" + searchType + "&searchText=" + searchText;
-            }
+            $("#curPage").val(1);
+
+            const form = document.getElementById("paramForm");
+            const formData = new FormData(form);
+
+            const queryString = Array.from(formData.entries())
+                .filter(([key, value]) => value.trim() !== '')
+                .map(([key, value]) => encodeURIComponent(key) + '=' + encodeURIComponent(value))
+                .join('&');
+
+            console.log(queryString);
+
+            location.href = "/movie/list?" + queryString;
+
         }
 
         function view(movieCd){

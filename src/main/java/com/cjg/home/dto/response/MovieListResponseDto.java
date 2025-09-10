@@ -18,4 +18,9 @@ public class MovieListResponseDto {
     private long totCnt;
     private long totPage;
     private int curPage;
+    private int itemPerPage;
+
+    private String movieNm;
+    private String directorNm;
+    private String repNationCd;
 }
