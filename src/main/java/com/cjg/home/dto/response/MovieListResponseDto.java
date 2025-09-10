@@ -23,4 +23,7 @@ public class MovieListResponseDto {
     private String movieNm;
     private String directorNm;
     private String repNationCd;
+
+    private String code;
+
 }

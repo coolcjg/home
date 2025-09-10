@@ -66,63 +66,81 @@ public class MovieService {
 
         }catch(URISyntaxException | InterruptedException | IOException e){
             log.error(e.getMessage());
+
+            return MovieListResponseDto.builder()
+                    .code("error")
+                    .build();
         }
 
         JsonObject obj = JsonParser.parseString(response.body()).getAsJsonObject();
 
-        JsonObject movieListResult = obj.get("movieListResult").getAsJsonObject();
+        if(obj.has("faultInfo")){
+            log.error("API ERROR");
+            log.error(obj);
 
-        int totCnt = movieListResult.get("totCnt").getAsInt();
+            return MovieListResponseDto.builder()
+                    .code("error")
+                    .build();
+        }else{
 
-        JsonArray movieList = movieListResult.getAsJsonArray("movieList").getAsJsonArray();
+            JsonObject movieListResult = obj.get("movieListResult").getAsJsonObject();
 
-        List<MovieResponseDto> list = new ArrayList<>();
+            int totCnt = movieListResult.get("totCnt").getAsInt();
 
-        for(JsonElement e : movieList){
-            JsonObject jo = e.getAsJsonObject();
-            String movieCd = jo.get("movieCd").getAsString();
-            String movieNm = jo.get("movieNm").getAsString();
+            JsonArray movieList = movieListResult.getAsJsonArray("movieList").getAsJsonArray();
 
-            int prdtYear = jo.get("prdtYear").getAsInt();
-            String openDt = jo.get("openDt").getAsString();
+            List<MovieResponseDto> list = new ArrayList<>();
 
-            String repNationNm = jo.get("repNationNm").getAsString();
-            String repGenreNm = jo.get("repGenreNm").getAsString();
+            for(JsonElement e : movieList){
+                JsonObject jo = e.getAsJsonObject();
+                String movieCd = jo.get("movieCd").getAsString();
+                String movieNm = jo.get("movieNm").getAsString();
 
-            String repDirector = "";
-            if(!jo.get("directors").getAsJsonArray().isEmpty()){
-                repDirector = jo.get("directors").getAsJsonArray().get(0).getAsJsonObject().get("peopleNm").getAsString();
+                int prdtYear = jo.get("prdtYear").getAsInt();
+                String openDt = jo.get("openDt").getAsString();
+
+                String repNationNm = jo.get("repNationNm").getAsString();
+                String repGenreNm = jo.get("repGenreNm").getAsString();
+
+                String repDirector = "";
+                if(!jo.get("directors").getAsJsonArray().isEmpty()){
+                    repDirector = jo.get("directors").getAsJsonArray().get(0).getAsJsonObject().get("peopleNm").getAsString();
+                }
+
+                MovieResponseDto temp = MovieResponseDto.builder()
+                        .movieCd(movieCd)
+                        .movieNm(movieNm)
+                        .prdtYear(prdtYear)
+                        .openDt(openDt)
+                        .repNationNm(repNationNm)
+                        .repGenreNm(repGenreNm)
+                        .repDirector(repDirector)
+                        .build();
+                list.add(temp);
             }
 
-            MovieResponseDto temp = MovieResponseDto.builder()
-            .movieCd(movieCd)
-            .movieNm(movieNm)
-            .prdtYear(prdtYear)
-            .openDt(openDt)
-            .repNationNm(repNationNm)
-            .repGenreNm(repGenreNm)
-            .repDirector(repDirector)
-            .build();
 
-            list.add(temp);
+            int totPage = totCnt / dto.getItemPerPage();
+            if(totPage == 0) totPage++;
+
+            List<Integer> pageList = PageUtil.getStartEndPage(dto.getCurPage(), totPage);
+
+            return MovieListResponseDto.builder()
+                    .list(list)
+                    .pageList(pageList)
+                    .curPage(dto.getCurPage())
+                    .totPage(totPage)
+                    .totCnt(totCnt)
+                    .itemPerPage(dto.getItemPerPage())
+                    .movieNm(dto.getMovieNm())
+                    .directorNm(dto.getDirectorNm())
+                    .build();
+
+
+
         }
 
 
-        int totPage = totCnt / dto.getItemPerPage();
-        if(totPage == 0) totPage++;
-
-        List<Integer> pageList = PageUtil.getStartEndPage(dto.getCurPage(), totPage);
-
-        return MovieListResponseDto.builder()
-                .list(list)
-                .pageList(pageList)
-                .curPage(dto.getCurPage())
-                .totPage(totPage)
-                .totCnt(totCnt)
-                .itemPerPage(dto.getItemPerPage())
-                .movieNm(dto.getMovieNm())
-                .directorNm(dto.getDirectorNm())
-                .build();
     }
 
     public MovieResponseDto view(CustomUserDetails customUserDetails, String movieCd){

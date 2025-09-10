@@ -23,6 +23,11 @@
             </tr>
             </thead>
             <tbody>
+
+            <tr th:if="${data.code} == 'error'">
+                <td colspan="5">API가 오류 발생</td>
+            </tr>
+
             <tr th:each="obj : ${data.list}">
                 <th class="mouse-over" scope="row" th:text="${obj.movieNm}" th:onclick="view([[${obj.movieCd}]])"></th>
                 <td th:text="${obj.repDirector}"></td>
