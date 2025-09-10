@@ -4,6 +4,7 @@ import com.cjg.home.domain.CustomUserDetails;
 import com.cjg.home.dto.request.MovieListRequestDto;
 import com.cjg.home.dto.response.MovieListResponseDto;
 import com.cjg.home.dto.response.MovieResponseDto;
+import com.cjg.home.dto.response.NationDto;
 import com.cjg.home.util.DateToString;
 import com.cjg.home.util.PageUtil;
 import com.google.gson.JsonArray;
@@ -51,6 +52,15 @@ public class MovieService {
 
         HttpResponse<String> response = null;
 
+        HttpResponse<String> nationCodeResponse = null;
+
+        String uri2 = UriComponentsBuilder.fromUriString("http://www.kobis.or.kr/kobisopenapi/webservice/rest/code/searchCodeList.json?key=" + movieApiKey + "&comCode=2204")
+                .queryParams(params)
+                .toUriString();
+
+        log.info("URI2 : " + uri2);
+
+
         try{
             HttpClient client = HttpClient.newHttpClient();
 
@@ -63,6 +73,19 @@ public class MovieService {
 
             log.info("Status Code: " + response.statusCode());
             log.info("Body: " + response.body());
+
+            HttpRequest request2 = HttpRequest.newBuilder()
+                    .uri(new URI(uri2))
+                    .GET()
+                    .build();
+
+            nationCodeResponse = client.send(request2, HttpResponse.BodyHandlers.ofString());
+
+            log.info("Status Code: " + response.statusCode());
+            log.info("Body: " + response.body());
+
+            log.info("Status Code[NATION]: " + nationCodeResponse.statusCode());
+            log.info("Body[NATION]: " + nationCodeResponse.body());
 
         }catch(URISyntaxException | InterruptedException | IOException e){
             log.error(e.getCause());
@@ -118,6 +141,15 @@ public class MovieService {
                 list.add(temp);
             }
 
+            JsonArray nationCodes = JsonParser.parseString(nationCodeResponse.body()).getAsJsonObject().get("codes").getAsJsonArray();
+
+            List<NationDto> nationList= new ArrayList<>();
+            for(JsonElement e : nationCodes){
+                JsonObject jo = e.getAsJsonObject();
+                nationList.add(NationDto.builder()
+                        .fullCd(jo.get("fullCd").getAsString())
+                        .korNm(jo.get("korNm").getAsString()).build());
+            }
 
             int totPage = totCnt / dto.getItemPerPage();
             if(totPage == 0) totPage++;
@@ -133,9 +165,11 @@ public class MovieService {
                     .itemPerPage(dto.getItemPerPage())
                     .movieNm(dto.getMovieNm())
                     .directorNm(dto.getDirectorNm())
+                    .openStartDt(dto.getOpenStartDt())
+                    .openEndDt(dto.getOpenEndDt())
+                    .nationList(nationList)
+                    .repNationCd(dto.getRepNationCd())
                     .build();
-
-
 
         }
 

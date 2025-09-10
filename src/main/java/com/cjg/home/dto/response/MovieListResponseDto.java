@@ -14,6 +14,7 @@ import java.util.List;
 public class MovieListResponseDto {
     private List<MovieResponseDto> list;
     private List<Integer> pageList;
+    private List<NationDto> nationList;
 
     private long totCnt;
     private long totPage;
@@ -23,6 +24,9 @@ public class MovieListResponseDto {
     private String movieNm;
     private String directorNm;
     private String repNationCd;
+
+    private String openStartDt;
+    private String openEndDt;
 
     private String code;
 
