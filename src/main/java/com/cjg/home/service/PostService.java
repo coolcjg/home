@@ -120,6 +120,17 @@ public class PostService {
 
     };
 
+    public void saveTemp(PostSaveRequestDto dto){
+
+        //존재하는 id인지 체크
+        String userId = userService.findByUserId(dto.getUserId()).getUserId();
+        String title = dto.getTitle();
+        String content = dto.getContent();
+        char oepn = dto.getOpen().charAt(0);
+
+        //MongoDB저장 작업
+    }
+
     public PostResponseDto save(PostSaveRequestDto dto){
 
         Post post = Post.builder()

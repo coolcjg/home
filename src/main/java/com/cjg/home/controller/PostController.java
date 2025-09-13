@@ -22,6 +22,12 @@ public class PostController {
 
     private final PostService postService;
     private final AuthCheck auth;
+
+    @PostMapping(value = "/v1/post/temp")
+    public ResponseEntity<Response<Void>> saveTemp(@RequestBody @Valid PostSaveRequestDto dto){
+        postService.saveTemp(dto);
+        return ResponseEntity.ok(Response.success(ResultCode.POST_SAVE_SUCCESS));
+    }
     
     @PostMapping(value = "/v1/post")
     public ResponseEntity<Response<PostResponseDto>> save(@RequestBody @Valid PostSaveRequestDto dto){

@@ -29,6 +29,9 @@ public enum ResultCode {
     S3_EXT_FAIL(HttpStatus.BAD_REQUEST, "이미지 확장자가 맞지 않습니다"),
     S3_SDK_FAIL(HttpStatus.BAD_REQUEST, "이미지 업로드에 실패하였습니다"),
 
+    POST_TEMP_SAVE_SUCCESS(HttpStatus.CREATED, "게시글 임시 저장 성공"),
+    POST_TEMP_SAVE_FAIL(HttpStatus.BAD_REQUEST, "게시글 임시 저장 실패"),
+
     POST_SAVE_SUCCESS(HttpStatus.CREATED, "게시글 저장 성공"),
     POST_SEARCH_SUCCESS(HttpStatus.OK, "게시글 조회 성공"),
     POST_LIST_SUCCESS(HttpStatus.OK, "게시글 리스트 조회 성공"),
