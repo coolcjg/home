@@ -59,7 +59,10 @@ public class PostViewController {
     @GetMapping(value = "/post/{postId}")
     public String view(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long postId, Model model){
         model.addAttribute("data", postService.view(customUserDetails, postId));
-        model.addAttribute("subscribeStatus", postService.subscribeStatus(customUserDetails, postId));
+
+        if(customUserDetails != null){
+            model.addAttribute("subscribeStatus", postService.subscribeStatus(customUserDetails, postId));
+        }
         return "post/view";
     }
 
