@@ -52,6 +52,64 @@
 
     <script>
         /*<![CDATA[*/
+        const INTERVAL_MS = 5 * 1000; // 1분
+        let lastSaved = ""; // 마지막에 저장된 데이터 문자열(JSON)
+        let hasInitialData = false;    // 최초에 데이터가 있었는지 여부
+
+        $(function () {
+            // 로드 시 초기값 저장
+            lastSaved = buildPayload();
+
+            // 1분마다 자동저장 시도
+            setInterval(autoSave, INTERVAL_MS);
+        });
+
+        // 자동 저장 함수
+        function autoSave() {
+            const currentPayload = buildPayload();
+
+            // 1. 신규 작성 모드일 때만 "빈 값은 저장 안 함"
+            if (!hasInitialData && currentPayload.title === '' && currentPayload.content === '') {
+                console.log("신규 작성 + 내용 없음 → 저장 안 함");
+                return;
+            }
+
+            // 이전 데이터와 동일하면 저장하지 않음
+            if (currentPayload === lastSaved) {
+                console.log("변경 없음 → 저장 생략");
+                return;
+            }
+
+            $.ajax({
+                url: "/v1/post/temp", // 임시저장 API
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                data: currentPayload,
+                success: function (data, status, xhr) {
+                    if (data.code === "201") {
+                        console.log("자동저장 성공", data.data);
+                        hasInitialData = true;      // 한 번이라도 저장되면 true
+                        lastSaved = currentPayload; // 성공 시 현재 데이터를 마지막 저장본으로 갱신
+                    } else {
+                        console.warn("자동저장 실패", data);
+                    }
+                },
+                error: function (xhr, status, err) {
+                    console.error("자동저장 에러:", xhr.responseJSON?.message || err);
+                }
+            });
+        }
+
+        // 입력값을 JSON으로 만들기
+        function buildPayload() {
+            return JSON.stringify({
+                userId : '[[${#authentication.name}]]'
+                , title : $("#title").val()
+                , content : $("#content").val()
+                , open : $("#open").val()
+            })
+        }
 
         function insert(){
 
@@ -66,12 +124,7 @@
 
             disableButton();
 
-            const json = JSON.stringify({
-                userId : '[[${#authentication.name}]]'
-                , title : $("#title").val()
-                , content : $("#content").val()
-                , open : $("#open").val()
-            })
+            const json = buildPayload();
 
             $.ajax({
                 url: "/v1/post",
