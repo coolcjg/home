@@ -1,6 +1,7 @@
 package com.cjg.home.service;
 
 import com.cjg.home.code.ResultCode;
+import com.cjg.home.document.PostDoc;
 import com.cjg.home.domain.Comment;
 import com.cjg.home.domain.CustomUserDetails;
 import com.cjg.home.domain.Post;
@@ -12,6 +13,7 @@ import com.cjg.home.dto.response.PostResponseDto;
 import com.cjg.home.exception.CustomException;
 import com.cjg.home.exception.CustomViewException;
 import com.cjg.home.repository.CommentRepository;
+import com.cjg.home.repository.PostDocRepository;
 import com.cjg.home.repository.PostRepository;
 import com.cjg.home.util.AES256;
 import com.cjg.home.util.AuthCheck;
@@ -46,6 +48,8 @@ public class PostService {
     private final KafkaProducer kafkaProducer;
     private final AES256 aes256;
     private final AuthCheck auth;
+
+    private final PostDocRepository postDocRepository;
 
     @Value("${image.url.prefix}")
     private String imageUrlPrefix;
@@ -126,9 +130,11 @@ public class PostService {
         String userId = userService.findByUserId(dto.getUserId()).getUserId();
         String title = dto.getTitle();
         String content = dto.getContent();
-        char oepn = dto.getOpen().charAt(0);
+        char open = dto.getOpen().charAt(0);
 
-        //MongoDB저장 작업
+        PostDoc postDoc = PostDoc.builder().userId(userId).title(title).content(content).open(open).build();
+
+        postDocRepository.save(postDoc);
     }
 
     public PostResponseDto save(PostSaveRequestDto dto){

@@ -71,6 +71,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 
+    //MongoDB
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
 
 }
 
