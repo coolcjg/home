@@ -23,10 +23,15 @@ public class PostController {
     private final PostService postService;
     private final AuthCheck auth;
 
+    @GetMapping(value = "/v1/post/temp/{userId}")
+    public ResponseEntity<Response<PostResponseDto>> loadTemp( @PathVariable String userId){
+        return ResponseEntity.ok(Response.success(ResultCode.POST_TEMP_SELECT_SUCCESS, postService.loadTemp(userId)));
+    }
+
     @PostMapping(value = "/v1/post/temp")
     public ResponseEntity<Response<Void>> saveTemp(@RequestBody @Valid PostSaveRequestDto dto){
         postService.saveTemp(dto);
-        return ResponseEntity.ok(Response.success(ResultCode.POST_SAVE_SUCCESS));
+        return ResponseEntity.ok(Response.success(ResultCode.POST_TEMP_SAVE_SUCCESS));
     }
     
     @PostMapping(value = "/v1/post")

@@ -137,6 +137,11 @@ public class PostService {
         postDocRepository.save(postDoc);
     }
 
+    public PostResponseDto loadTemp(String userId){
+        PostDoc postDoc = postDocRepository.findFirstByUserIdOrderByIdDesc(userId);
+        return PostResponseDto.builder().title(postDoc.title()).content(postDoc.content()).open(postDoc.open()).build();
+    }
+
     public PostResponseDto save(PostSaveRequestDto dto){
 
         Post post = Post.builder()

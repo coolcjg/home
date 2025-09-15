@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PostDocRepository extends CrudRepository<PostDoc,Integer> {
 
+    PostDoc findFirstByUserIdOrderByIdDesc(String userId);
+
 }

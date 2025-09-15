@@ -2,7 +2,6 @@ package com.cjg.home.document;
 
 import jakarta.persistence.Id;
 import lombok.Builder;
-import org.springframework.data.mongodb.core.index.IndexDirection;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 

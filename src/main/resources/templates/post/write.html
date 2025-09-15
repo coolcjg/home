@@ -52,27 +52,54 @@
 
     <script>
         /*<![CDATA[*/
-        const INTERVAL_MS = 5 * 1000; // 1분
+        const INTERVAL_MS = 60 * 1000; // 1분
         let lastSaved = ""; // 마지막에 저장된 데이터 문자열(JSON)
         let hasInitialData = false;    // 최초에 데이터가 있었는지 여부
 
         $(function () {
-            // 로드 시 초기값 저장
-            lastSaved = buildPayload();
+            //임시 저장 데이터 불러오기
+            loadPostTemp();
 
             // 1분마다 자동저장 시도
             setInterval(autoSave, INTERVAL_MS);
         });
 
+        //임시 저장 데이터 불러오기
+        function loadPostTemp(){
+
+            const userId = '[[${#authentication.name}]]';
+
+            $.ajax({
+                url: "/v1/post/temp/"+userId,
+                type: "GET",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data, status, xhr) {
+                    if (data.code === "200") {
+                        $("#title").val(data.data.title);
+                        $("#content").val(data.data.content);
+                        $("#open").val(data.data.open);
+                        lastSaved = buildPayload();
+                    } else {
+                        console.warn("임시 저장 데이터 불러오기 실패", data);
+                    }
+                },
+                error: function (xhr, status, err) {
+                    console.error("임시 저장 데이터 불러오기 에러:", xhr.responseJSON?.message || err);
+                }
+            });
+        }
+
         // 자동 저장 함수
         function autoSave() {
-            const currentPayload = buildPayload();
 
             // 1. 신규 작성 모드일 때만 "빈 값은 저장 안 함"
-            if (!hasInitialData && currentPayload.title === '' && currentPayload.content === '') {
+            if (!hasInitialData && $("#title").val() === '' && $("#content").val() === '') {
                 console.log("신규 작성 + 내용 없음 → 저장 안 함");
                 return;
             }
+
+            const currentPayload = buildPayload();
 
             // 이전 데이터와 동일하면 저장하지 않음
             if (currentPayload === lastSaved) {
