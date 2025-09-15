@@ -9,4 +9,6 @@ public interface PostDocRepository extends CrudRepository<PostDoc,Integer> {
 
     PostDoc findFirstByUserIdOrderByIdDesc(String userId);
 
+    void deleteByUserId(String userId);
+
 }

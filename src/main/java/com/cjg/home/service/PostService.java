@@ -172,6 +172,8 @@ public class PostService {
 
         kafkaProducer.create(topicName, new Gson().toJson(kafkaAlarmDto));
 
+        postDocRepository.deleteByUserId(result.getUser().getUserId());
+
         return response;
     }
 
