@@ -20,6 +20,5 @@ public class UserSaveRequestDto {
     @NotBlank(message = "패스워드를 입력하세요")
     private String password;
 
-    @NotNull(message = "이미지를 추가하세요")
     private MultipartFile image;
 }

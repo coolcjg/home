@@ -34,7 +34,7 @@ public class UserController {
     private String cookieDomain;
 
     @GetMapping(value = "/v1/user/{userId}/count")
-    public ResponseEntity<Response<Long>> count(@PathVariable("userId") String userId){
+    public ResponseEntity<Response<UserResponseDto>> count(@PathVariable("userId") String userId){
         return ResponseEntity.ok(Response.success(ResultCode.USER_SEARCH_SUCCESS, userService.count(userId)));
     }
 

@@ -56,8 +56,10 @@ public class UserService {
 
     private final RedisService redisService;
 
-    public Long count(String userId){
-        return userRepository.countByUserId(userId);
+    public UserResponseDto count(String userId){
+        return UserResponseDto.builder()
+                .count(userRepository.countByUserId(userId))
+                .build();
     }
 
     public UserResponseDto save(UserSaveRequestDto dto){
@@ -87,6 +89,10 @@ public class UserService {
 
 
     public String saveFile(MultipartFile file) throws IOException {
+
+        if(file == null){
+            return "";
+        }
 
         // 저장할 경로
         String uuid = UUID.randomUUID().toString();
