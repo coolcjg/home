@@ -74,7 +74,7 @@ dependencies {
     //MongoDB
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
-    //validation (이게 추가되어야지 실제 적합성이 체크된다)
+    //validation (정합성이 체크 : controller @Valid)
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
 

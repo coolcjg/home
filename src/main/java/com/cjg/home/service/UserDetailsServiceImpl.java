@@ -27,7 +27,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
         User user = userRepository.findByUserId(userId);
 
-        if(!user.getImage().startsWith("http")){
+        if(user.getImage() != null && !user.getImage().startsWith("http")){
             user.setImage(imageUrl+user.getImage());
         }
 
