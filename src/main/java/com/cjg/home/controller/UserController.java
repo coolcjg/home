@@ -33,17 +33,17 @@ public class UserController {
     @Value("${cookie.domain}")
     private String cookieDomain;
 
-    @GetMapping(value = "/v1/user/{userId}/count")
+    @GetMapping(value = "/user/{userId}/count")
     public ResponseEntity<Response<UserResponseDto>> count(@PathVariable("userId") String userId){
         return ResponseEntity.ok(Response.success(ResultCode.USER_SEARCH_SUCCESS, userService.count(userId)));
     }
 
-    @PostMapping(value = "/v1/user")
+    @PostMapping(value = "/user")
     public ResponseEntity<Response<UserResponseDto>> save(@ModelAttribute @Valid UserSaveRequestDto userSaveRequestDto){
         return ResponseEntity.ok(Response.success(ResultCode.USER_SAVE_SUCCESS, userService.save(userSaveRequestDto)));
     }
 
-    @PostMapping(value = "/v1/user/login")
+    @PostMapping(value = "/user/login")
     public ResponseEntity<Response<UserLoginResponseDto>> login(@RequestBody @Valid UserLoginRequestDto userLoginRequestDto){
         UserLoginResponseDto userLoginResponseDto = userService.login(userLoginRequestDto);
 
@@ -69,7 +69,7 @@ public class UserController {
                 .body(Response.success(ResultCode.USER_LOGIN_SUCCESS, userLoginResponseDto));
     }
 
-    @PutMapping(value = "/v1/user")
+    @PutMapping(value = "/user")
     public ResponseEntity<Response<?>> modify(@AuthenticationPrincipal CustomUserDetails customUserDetails, @ModelAttribute @Valid UserModifyRequestDto dto){
         if(auth.isSameUserForUser(customUserDetails, dto.getUserId())){
             return ResponseEntity.ok(Response.success(ResultCode.USER_MODIFY_SUCCESS, userService.modify(dto)));
@@ -78,7 +78,7 @@ public class UserController {
         }
     }
 
-    @GetMapping(value = "/v1/user/logout")
+    @GetMapping(value = "/user/logout")
     public ResponseEntity<Response<Void>> logout(HttpServletRequest request, HttpServletResponse response){
         userService.logout(request, response);
         return ResponseEntity.ok().body(Response.success(ResultCode.USER_LOGOUT_SUCCESS));
