@@ -137,18 +137,26 @@ public class JwtTokenProvider {
 
 		String[] token = new String[2];
 
-		Cookie[] cookies = req.getCookies();
-		if(cookies != null){
-			for(Cookie cookie : cookies){
-				if("accessToken".equals(cookie.getName())){
-					token[0] =  cookie.getValue();
-				}
+        String authorization = req.getHeader("Authorization");
 
-				if("refreshToken".equals(cookie.getName())){
-					token[1] =  cookie.getValue();
-				}
-			}
-		}
+        System.out.println("Authorization : " + authorization);
+        if(authorization != null){
+            token[0] = authorization.split(" ")[1];
+            token[1] = "test";
+        }
+
+//		Cookie[] cookies = req.getCookies();
+//		if(cookies != null){
+//			for(Cookie cookie : cookies){
+//				if("accessToken".equals(cookie.getName())){
+//					token[0] =  cookie.getValue();
+//				}
+//
+//				if("refreshToken".equals(cookie.getName())){
+//					token[1] =  cookie.getValue();
+//				}
+//			}
+//		}
 
 		return token;
 	}

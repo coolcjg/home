@@ -45,8 +45,8 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/post/list").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/post/*").permitAll()
 
-                                .requestMatchers(HttpMethod.GET, "/v1/user/*/count").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/v1/user", "/v1/user/login").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/user/*/count").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/user", "/user/login").permitAll()
 
                                 .requestMatchers(HttpMethod.GET, "/login/oauth2/code/*").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/login/oauth2/loginUrl").permitAll()
