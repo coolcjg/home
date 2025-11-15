@@ -1,6 +1,7 @@
 package com.cjg.home.config.jwt;
 
 import com.cjg.home.code.ResultCode;
+import com.cjg.home.exception.CustomAuthException;
 import com.cjg.home.exception.CustomException;
 import com.cjg.home.service.RedisService;
 import com.cjg.home.service.UserDetailsServiceImpl;
@@ -9,9 +10,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +45,8 @@ public class JwtTokenProvider {
 	private final UserDetailsServiceImpl userDetailsService;
 
     private final RedisService redisService;
+
+    private final JwtTokenParser jwtTokenParser;
 
 	/**
 	 * Access 토큰 생성
@@ -141,22 +142,9 @@ public class JwtTokenProvider {
 
         System.out.println("Authorization : " + authorization);
         if(authorization != null){
-            token[0] = authorization.split(" ")[1];
+            token[0] = jwtTokenParser.parse(authorization);
             token[1] = "test";
         }
-
-//		Cookie[] cookies = req.getCookies();
-//		if(cookies != null){
-//			for(Cookie cookie : cookies){
-//				if("accessToken".equals(cookie.getName())){
-//					token[0] =  cookie.getValue();
-//				}
-//
-//				if("refreshToken".equals(cookie.getName())){
-//					token[1] =  cookie.getValue();
-//				}
-//			}
-//		}
 
 		return token;
 	}
@@ -164,27 +152,17 @@ public class JwtTokenProvider {
 	/**
 	 * Access 토큰을 검증
 	 */
-	public boolean validateToken(String[] token){
+	public boolean validateToken(String[] token) throws CustomAuthException {
 		try{
 			Jwts.parser().verifyWith(Keys.hmacShaKeyFor(secretKey.getBytes())).build().parseSignedClaims(token[0]);
 			return true;
 		} catch(ExpiredJwtException e) {
-
-            log.info("accessToken 만료시간 지남");
-			String userPrincipal = getUserPrincipal(token[1]);
-			String savedRefreshToken  = redisTemplate.opsForValue().get(userPrincipal);
-
-			if(token[1].equals(savedRefreshToken)){
-				validateRefreshToken(token[1]);
-				token[0] = createAccessToken(userPrincipal);
-                log.info("새로 발급받은 accessToken : " + token[0]);
-				return true;
-			}
-
+            log.info("ExpiredJwtException : ", e);
+            throw new CustomAuthException(ResultCode.JWT_EXPIRE);
 		} catch(JwtException e) {
-			log.error(e);
+            log.error("JwtException : ", e);
+            throw new CustomAuthException(ResultCode.JWT_ERROR);
 		}
-		return false;
 	}
 
 	public boolean validateRefreshToken(String refreshToken){
@@ -193,21 +171,6 @@ public class JwtTokenProvider {
 			return true;
 		} catch(ExpiredJwtException e) {
 			throw new CustomException(ResultCode.JWT_EXPIRE);
-		}
-	}
-
-	public void removeTokenFromCookie(HttpServletRequest request, HttpServletResponse response){
-		Cookie[] cookies = request.getCookies();
-		if(cookies != null){
-			for(Cookie cookie : cookies){
-				cookie.setHttpOnly(true);
-				cookie.setSecure(false);
-				cookie.setPath("/");
-				cookie.setValue("");
-				cookie.setMaxAge(0);
-				cookie.setDomain(cookieDomain);
-				response.addCookie(cookie);
-			}
 		}
 	}
 }

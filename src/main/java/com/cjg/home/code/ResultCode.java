@@ -49,8 +49,8 @@ public enum ResultCode {
 
     INVALID_PARAM(HttpStatus.BAD_REQUEST, "적합하지 않은 파라미터입니다"),
 
-    JWT_EXPIRE(HttpStatus.BAD_REQUEST, "인증토큰 만료"),
-    JWT_ERROR(HttpStatus.BAD_REQUEST, "인증토큰 에러"),
+    JWT_EXPIRE(HttpStatus.UNAUTHORIZED, "인증토큰 만료"),
+    JWT_ERROR(HttpStatus.UNAUTHORIZED, "인증토큰 에러"),
 
     REDIS_CONNECTION(HttpStatus.BAD_REQUEST, "레디스 연결 에러"),
 
@@ -92,4 +92,9 @@ public enum ResultCode {
     public String getCode() {
         return String.valueOf(httpStatus.value());
     }
+
+    public int getValue(){
+        return httpStatus.value();
+    }
+
 }

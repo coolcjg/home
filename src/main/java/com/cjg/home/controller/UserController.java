@@ -2,9 +2,11 @@ package com.cjg.home.controller;
 
 
 import com.cjg.home.code.ResultCode;
+import com.cjg.home.config.jwt.JwtTokenParser;
 import com.cjg.home.domain.CustomUserDetails;
 import com.cjg.home.dto.request.UserLoginRequestDto;
 import com.cjg.home.dto.request.UserModifyRequestDto;
+import com.cjg.home.dto.request.UserRefreshTokenDto;
 import com.cjg.home.dto.request.UserSaveRequestDto;
 import com.cjg.home.dto.response.UserLoginResponseDto;
 import com.cjg.home.dto.response.UserResponseDto;
@@ -29,6 +31,8 @@ public class UserController {
     private final UserService userService;
 
     private final AuthCheck auth;
+
+    private final JwtTokenParser jwtTokenParser;
 
     @Value("${cookie.domain}")
     private String cookieDomain;
@@ -84,4 +88,10 @@ public class UserController {
         return ResponseEntity.ok().body(Response.success(ResultCode.USER_LOGOUT_SUCCESS));
     }
 
+    @PostMapping(value = "/user/refreshToken")
+    public ResponseEntity<Response<UserLoginResponseDto>> getRefreshToken(HttpServletRequest request, @RequestBody @Valid UserRefreshTokenDto userRefreshTokenDto){
+        userRefreshTokenDto.setRefreshToken(jwtTokenParser.parse(request.getHeader("Authorization")));
+        return ResponseEntity.ok()
+                .body(Response.success(ResultCode.USER_LOGIN_SUCCESS, userService.getRefreshToken(userRefreshTokenDto)));
+    }
 }

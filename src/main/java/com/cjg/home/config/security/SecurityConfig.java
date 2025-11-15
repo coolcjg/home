@@ -41,6 +41,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/user/login", "/user/signup").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/actuator/prometheus").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/user/refreshToken").permitAll()
 
                                 .requestMatchers(HttpMethod.GET, "/post/list").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/post/*").permitAll()
@@ -61,6 +62,7 @@ public class SecurityConfig {
                                 .anyRequest().authenticated()
 
                 )
+
                 .exceptionHandling((exception) -> exception.authenticationEntryPoint(customAuthenticationEntryPoint))
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 

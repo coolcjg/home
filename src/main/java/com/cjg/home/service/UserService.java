@@ -6,6 +6,7 @@ import com.cjg.home.config.jwt.JwtTokenProvider;
 import com.cjg.home.domain.User;
 import com.cjg.home.dto.request.UserLoginRequestDto;
 import com.cjg.home.dto.request.UserModifyRequestDto;
+import com.cjg.home.dto.request.UserRefreshTokenDto;
 import com.cjg.home.dto.request.UserSaveRequestDto;
 import com.cjg.home.dto.response.UserLoginResponseDto;
 import com.cjg.home.dto.response.UserResponseDto;
@@ -186,14 +187,26 @@ public class UserService {
         }catch(ExpiredJwtException e){
             log.error("logout invalid token");
         }
-        jwtTokenProvider.removeTokenFromCookie(request, response);
         SecurityContextHolder.clearContext();
     }
 
+    public UserLoginResponseDto getRefreshToken(UserRefreshTokenDto userRefreshTokenDto){
 
+        String redisRefreshToken = redisService.find(userRefreshTokenDto.getUserId());
 
+        if(redisRefreshToken.equals(userRefreshTokenDto.getRefreshToken())){
+            String accessToken = jwt.createAccessToken(userRefreshTokenDto.getUserId());
+            String refreshToken = jwt.createRefreshToken(userRefreshTokenDto.getUserId());
 
+            return UserLoginResponseDto.builder()
+                    .userId(userRefreshTokenDto.getUserId())
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .build();
+        }else{
+            log.error("refreshToken not equal : redisRefreshToken : {}, clientRefreshToken : {}", redisRefreshToken, userRefreshTokenDto.getRefreshToken());
+            throw new CustomException(ResultCode.JWT_ERROR);
+        }
+
+    }
 }
-
-
-

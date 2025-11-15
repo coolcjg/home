@@ -2,6 +2,7 @@ package com.cjg.home.config.security;
 
 import com.cjg.home.code.ResultCode;
 import com.cjg.home.config.jwt.JwtTokenProvider;
+import com.cjg.home.exception.CustomAuthException;
 import com.cjg.home.response.Response;
 import com.google.gson.Gson;
 import jakarta.servlet.ServletException;
@@ -28,7 +29,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint{
 			AuthenticationException authException) throws IOException, ServletException {
 			log.error("인증 에러 처리 message : " + authException.getMessage());
 			log.error("인증 에러 처리 uri : " + request.getRequestURI());
-			jwtTokenProvider.removeTokenFromCookie(request, response);
 			if(isRestrictPageViewUri(request.getRequestURI())){
 				redirect(request, response);
 			}else{

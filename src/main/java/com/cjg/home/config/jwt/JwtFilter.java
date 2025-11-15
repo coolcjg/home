@@ -1,10 +1,13 @@
 package com.cjg.home.config.jwt;
 
 
+import com.cjg.home.code.ResultCode;
 import com.cjg.home.domain.User;
+import com.cjg.home.dto.response.JwtErrorResponse;
+import com.cjg.home.exception.CustomAuthException;
 import com.cjg.home.repository.UserRepository;
 import com.cjg.home.service.RedisService;
-import io.jsonwebtoken.ExpiredJwtException;
+import com.google.gson.Gson;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -70,31 +73,28 @@ public class JwtFilter extends OncePerRequestFilter {
                     if(user == null){
                         redisService.delete(userId);
                         SecurityContextHolder.clearContext();
-                        invalidToken(request, response);
                         return;
                     }
 
 					//토큰이 있다는것은 로그인을 했다는것이기 때문에 추가로 인증로직을 수행하지 않는다.
 					Authentication auth = jwtTokenProvider.getAuthentication(token[0]);
 					SecurityContextHolder.getContext().setAuthentication(auth);
-				}else{
-					//토큰 처리가 실패했을 경우에 로그인 페이지 이동
-					invalidToken(request, response);
 				}
-			} catch (RedisConnectionFailureException | ExpiredJwtException e) {
+			} catch (RedisConnectionFailureException e) {
 				SecurityContextHolder.clearContext();
 				log.error(e);
+			} catch (CustomAuthException e){
+                ResultCode resultCode = e.getResultCode();
+                response.setContentType("application/json;charset=UTF-8");
+                response.setStatus(resultCode.getValue());
 
-				//토큰 처리가 실패했을 경우에 로그인 페이지 이동
-				invalidToken(request, response);
-			}
+                JwtErrorResponse jwtErrorResopnse = JwtErrorResponse.builder().code(resultCode.getValue()).message(resultCode.getMessage()).build();
+                String json = new Gson().toJson(jwtErrorResopnse);
+                response.getWriter().write(json);
+                return;
+            }
         }
 
 		filterChain.doFilter(request, response);
-	}
-
-	private void invalidToken(HttpServletRequest request, HttpServletResponse response) throws IOException{
-		jwtTokenProvider.removeTokenFromCookie(request, response);
-		response.sendRedirect("/user/login");
 	}
 }
