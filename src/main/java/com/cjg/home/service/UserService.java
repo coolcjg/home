@@ -183,7 +183,7 @@ public class UserService {
 
     public void logout(HttpServletRequest request, HttpServletResponse response){
         try{
-            redisService.delete(jwtTokenProvider.getUserPrincipal(jwtTokenProvider.resolveToken(request)[0]));
+            redisService.delete(jwtTokenProvider.getUserPrincipal(jwtTokenProvider.resolveToken(request)));
         }catch(ExpiredJwtException e){
             log.error("logout invalid token");
         }

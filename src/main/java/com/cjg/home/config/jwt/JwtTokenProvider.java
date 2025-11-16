@@ -134,27 +134,22 @@ public class JwtTokenProvider {
 	/**
 	 * http 헤더로부터 bearer 토큰을 가져옴.
 	 */
-	public String[] resolveToken(HttpServletRequest req) {
-
-		String[] token = new String[2];
-
+	public String resolveToken(HttpServletRequest req) {
         String authorization = req.getHeader("Authorization");
 
-        System.out.println("Authorization : " + authorization);
         if(authorization != null){
-            token[0] = jwtTokenParser.parse(authorization);
-            token[1] = "test";
+            return jwtTokenParser.parse(authorization);
         }
 
-		return token;
+		return null;
 	}
 
 	/**
 	 * Access 토큰을 검증
 	 */
-	public boolean validateToken(String[] token) throws CustomAuthException {
+	public boolean validateToken(String token) throws CustomAuthException {
 		try{
-			Jwts.parser().verifyWith(Keys.hmacShaKeyFor(secretKey.getBytes())).build().parseSignedClaims(token[0]);
+			Jwts.parser().verifyWith(Keys.hmacShaKeyFor(secretKey.getBytes())).build().parseSignedClaims(token);
 			return true;
 		} catch(ExpiredJwtException e) {
             log.info("ExpiredJwtException : ", e);
