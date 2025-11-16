@@ -49,13 +49,9 @@ public class PostController {
     }
 
     @DeleteMapping(value = "/v1/post")
-    public ResponseEntity<Response<Void>> delete(@AuthenticationPrincipal CustomUserDetails customUserDetails, @RequestBody @Valid PostDeleteRequestDto dto){
-        if(auth.isSameUserForPost(customUserDetails, dto.getPostId())){
-            postService.delete(dto);
-            return ResponseEntity.ok(Response.success(ResultCode.POST_DELETE_SUCCESS));
-        }else{
-            return ResponseEntity.status(ResultCode.POST_INVALID_AUTH.getHttpStatus()).body(Response.fail(ResultCode.POST_INVALID_AUTH));
-        }
+    public ResponseEntity<Response<Void>> delete(@RequestBody @Valid PostDeleteRequestDto dto){
+        postService.delete(dto);
+        return ResponseEntity.ok(Response.success(ResultCode.POST_DELETE_SUCCESS));
     }
 
 }

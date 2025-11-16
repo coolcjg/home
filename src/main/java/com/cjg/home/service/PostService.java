@@ -250,9 +250,10 @@ public class PostService {
 
     @Transactional
     public void delete(PostDeleteRequestDto dto){
-        commentRepository.deleteByPostPostId(dto.getPostId());
-        postRepository.deleteById(dto.getPostId());
+        for(Long postId : dto.getPostIds()){
+            commentRepository.deleteByPostPostId(postId);
+            postRepository.deleteById(postId);
+        }
     }
-
 }
 

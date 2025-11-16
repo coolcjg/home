@@ -89,12 +89,7 @@ public enum ResultCode {
     private final HttpStatus httpStatus;
     private final String message;
 
-    public String getCode() {
-        return String.valueOf(httpStatus.value());
-    }
-
-    public int getValue(){
+    public int getCode() {
         return httpStatus.value();
     }
-
 }

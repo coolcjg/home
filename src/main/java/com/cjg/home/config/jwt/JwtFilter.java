@@ -86,9 +86,9 @@ public class JwtFilter extends OncePerRequestFilter {
 			} catch (CustomAuthException e){
                 ResultCode resultCode = e.getResultCode();
                 response.setContentType("application/json;charset=UTF-8");
-                response.setStatus(resultCode.getValue());
+                response.setStatus(resultCode.getCode());
 
-                JwtErrorResponse jwtErrorResponse = JwtErrorResponse.builder().code(resultCode.getValue()).message(resultCode.getMessage()).build();
+                JwtErrorResponse jwtErrorResponse = JwtErrorResponse.builder().code(resultCode.getCode()).message(resultCode.getMessage()).build();
                 String json = new Gson().toJson(jwtErrorResponse);
                 response.getWriter().write(json);
                 return;

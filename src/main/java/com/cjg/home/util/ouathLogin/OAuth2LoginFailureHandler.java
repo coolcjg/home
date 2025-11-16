@@ -35,7 +35,7 @@ public class OAuth2LoginFailureHandler extends SimpleUrlAuthenticationFailureHan
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");
 
-        ResponseEntity<Response<Void>> result = ResponseEntity.status(Integer.parseInt(ResultCode.OAUTH_LOGIN_EXCEPTION.getCode()))
+        ResponseEntity<Response<Void>> result = ResponseEntity.status(ResultCode.OAUTH_LOGIN_EXCEPTION.getCode())
                 .body(Response.fail(ResultCode.OAUTH_LOGIN_EXCEPTION));
 
         // ObjectMapper를 사용하여 Response 객체를 JSON으로 직렬화하고, 클라이언트에 응답으로 보냄

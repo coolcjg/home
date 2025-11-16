@@ -10,7 +10,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class Response<T> {
-    private final String code;
+    private final int code;
     private final String message;
 
     @JsonInclude(JsonInclude.Include.NON_NULL) // Null 값인 필드 제외

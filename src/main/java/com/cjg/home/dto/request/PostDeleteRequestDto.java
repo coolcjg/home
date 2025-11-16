@@ -12,5 +12,5 @@ import lombok.ToString;
 public class PostDeleteRequestDto {
 
     @NotNull(message = "게시글 번호를 입력해주세요")
-    private Long postId;
+    private Long[] postIds;
 }
