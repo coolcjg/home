@@ -158,11 +158,11 @@ public class JwtTokenProvider {
 			return true;
 		} catch(ExpiredJwtException e) {
             log.info("ExpiredJwtException : ", e);
-            throw new CustomAuthException(ResultCode.JWT_EXPIRE);
 		} catch(JwtException e) {
             log.error("JwtException : ", e);
-            throw new CustomAuthException(ResultCode.JWT_ERROR);
 		}
+
+        return false;
 	}
 
 	public boolean validateRefreshToken(String refreshToken){

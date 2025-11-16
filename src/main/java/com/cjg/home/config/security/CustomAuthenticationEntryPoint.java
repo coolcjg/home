@@ -27,32 +27,15 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint{
 	@Override
 	public void commence(HttpServletRequest request, HttpServletResponse response,
 			AuthenticationException authException) throws IOException, ServletException {
-			log.error("인증 에러 처리 message : " + authException.getMessage());
-			log.error("인증 에러 처리 uri : " + request.getRequestURI());
-			if(isRestrictPageViewUri(request.getRequestURI())){
-				redirect(request, response);
-			}else{
-				setResponse(response, authException);
-			}
-
+        log.error("인증 에러 처리 message : " + authException.getMessage());
+		log.error("인증 에러 처리 uri : " + request.getRequestURI());
+        setResponse(response, authException);
     }
 
-	private boolean isRestrictPageViewUri(String uri){
-		if(uri.startsWith("/post") && uri.endsWith("/modify")){
-			return true;
-		}
-
-		return false;
-	}
-	
 	private void setResponse(HttpServletResponse response, AuthenticationException authException) throws IOException {
 		response.setContentType("application/json;charset=UTF-8");
-		response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-		response.getWriter().print(new Gson().toJson(Response.fail(ResultCode.INVALID_PARAM, authException.getMessage())));
-	}
-
-	private void redirect(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-		request.getRequestDispatcher("/error/401.html").forward(request, response);
+		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+		response.getWriter().print(new Gson().toJson(Response.fail(ResultCode.JWT_ERROR, authException.getMessage())));
 	}
 
 }

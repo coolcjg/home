@@ -88,8 +88,8 @@ public class JwtFilter extends OncePerRequestFilter {
                 response.setContentType("application/json;charset=UTF-8");
                 response.setStatus(resultCode.getValue());
 
-                JwtErrorResponse jwtErrorResopnse = JwtErrorResponse.builder().code(resultCode.getValue()).message(resultCode.getMessage()).build();
-                String json = new Gson().toJson(jwtErrorResopnse);
+                JwtErrorResponse jwtErrorResponse = JwtErrorResponse.builder().code(resultCode.getValue()).message(resultCode.getMessage()).build();
+                String json = new Gson().toJson(jwtErrorResponse);
                 response.getWriter().write(json);
                 return;
             }
