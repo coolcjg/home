@@ -29,6 +29,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -178,23 +179,27 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponseDto view(CustomUserDetails customUserDetails, Long postId){
-        Post post = postRepository.findById(postId).orElseThrow(()-> new CustomViewException(ResultCode.POST_SEARCH_NOT_FOUND));
-        if(post.getOpen() == 'Y'){
+    public PostResponseDto view(Authentication authentication, Long postId){
+        Post post = postRepository.findById(postId).orElseThrow(()-> new CustomException(ResultCode.POST_SEARCH_NOT_FOUND));
+        //if(true){
             post.setViewCnt(post.getViewCnt()+1);
             return postToDto(post);
-        }else{
-            if(customUserDetails == null){
-                throw new CustomViewException(ResultCode.POST_INVALID_AUTH);
-            }else{
-                if(auth.isSameUserForUser(customUserDetails, post.getUser().getUserId())){
-                    post.setViewCnt(post.getViewCnt()+1);
-                    return postToDto(post);
-                }else{
-                    throw new CustomViewException(ResultCode.POST_INVALID_AUTH);
-                }
-            }
-        }
+        //}else{
+
+
+
+
+//            if(customUserDetails == null){
+//                throw new CustomViewException(ResultCode.POST_INVALID_AUTH);
+//            }else{
+//                if(auth.isSameUserForUser(customUserDetails, post.getUser().getUserId())){
+//                    post.setViewCnt(post.getViewCnt()+1);
+//                    return postToDto(post);
+//                }else{
+//                    throw new CustomViewException(ResultCode.POST_INVALID_AUTH);
+//                }
+//            }
+       // }
     }
 
     public boolean subscribeStatus(CustomUserDetails customUserDetails, Long postId){

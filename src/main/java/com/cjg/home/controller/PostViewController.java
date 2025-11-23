@@ -1,11 +1,9 @@
 package com.cjg.home.controller;
 
 import com.cjg.home.code.ResultCode;
-import com.cjg.home.domain.CustomUserDetails;
 import com.cjg.home.dto.request.PostListRequestDto;
 import com.cjg.home.dto.response.PostListResponseDto;
 import com.cjg.home.dto.response.PostResponseDto;
-import com.cjg.home.exception.CustomViewException;
 import com.cjg.home.response.Response;
 import com.cjg.home.service.PostService;
 import com.cjg.home.service.SubscribeService;
@@ -13,9 +11,7 @@ import com.cjg.home.util.AuthCheck;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -61,23 +57,18 @@ public class PostViewController {
     }
 
     @GetMapping(value = "/post/{postId}")
-    public String view(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long postId, Model model){
-        model.addAttribute("data", postService.view(customUserDetails, postId));
-
-        if(customUserDetails != null){
-            model.addAttribute("subscribeStatus", postService.subscribeStatus(customUserDetails, postId));
-        }
-        return "post/view";
+    public ResponseEntity<Response<PostResponseDto>> view(Authentication authentication, @PathVariable Long postId){
+        return ResponseEntity.ok(Response.success(ResultCode.POST_SEARCH_SUCCESS, postService.view(authentication, postId)));
     }
 
-    @GetMapping(value = "/post/{postId}/modify")
-    public String modify(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long postId, Model model){
-        if(authCheck.isSameUserForPost(customUserDetails, postId)){
-            model.addAttribute("data", postService.view(customUserDetails, postId));
-        }else{
-            throw new CustomViewException(ResultCode.POST_INVALID_AUTH);
-        }
-        return "post/modify";
-    }
+//    @GetMapping(value = "/post/{postId}/modify")
+//    public String modify(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long postId, Model model){
+//        if(authCheck.isSameUserForPost(customUserDetails, postId)){
+//            model.addAttribute("data", postService.view(customUserDetails, postId));
+//        }else{
+//            throw new CustomViewException(ResultCode.POST_INVALID_AUTH);
+//        }
+//        return "post/modify";
+//    }
 
 }
